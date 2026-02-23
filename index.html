@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Actuario · Plan de Estudios</title>
+<link rel="icon" type="image/png" href="fce.png">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 /* ── THEMES ──────────────────────────────────────────────────────────── */
@@ -44,13 +45,13 @@ body.theme-cream {
   --stat-label-color:#9a8e78; --header-color:#2a2018;
 }
 body.theme-slate {
-  --bg:#1a1f2e; --surface:#222840; --border:#2e3550;
-  --pending-bg:#1e2438; --pending-border:#353e60; --pending-text:#4a5580;
+  --bg:#0d2a4a; --surface:#0f3560; --border:#1C6EC4;
+  --pending-bg:#0a2040; --pending-border:#1a4a80; --pending-text:#4a80b8;
   --regular-bg:#1e1a00; --regular-border:#e6b800; --regular-text:#e6b800;
-  --approved-bg:#001820; --approved-border:#00ccaa; --approved-text:#00ccaa;
-  --available-bg:#20253a; --available-border:#7090d0; --available-text:#a0b8e8;
-  --accent:#6090ff; --text-main:#a0b0d0; --text-sub:#404870;
-  --stat-label-color:#404870; --header-color:#d0e0ff;
+  --approved-bg:#003820; --approved-border:#00d4aa; --approved-text:#00d4aa;
+  --available-bg:#0e3460; --available-border:#6ab0e8; --available-text:#a8d4f8;
+  --accent:#1C6EC4; --text-main:#a8ccee; --text-sub:#3a6898;
+  --stat-label-color:#3a6898; --header-color:#e8f4ff;
 }
 
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -58,14 +59,10 @@ body { background:var(--bg); color:var(--text-main); font-family:'Syne',sans-ser
 
 /* ── THEME SWITCHER ──────────────────────────────────────────────────── */
 .theme-switcher {
-  position:fixed; top:20px; right:24px;
-  display:flex; align-items:center; gap:8px; z-index:100;
-  background:var(--surface); border:1px solid var(--border);
-  border-radius:12px; padding:8px 12px;
-  box-shadow:0 4px 20px rgba(0,0,0,.2);
-  transition:background .3s,border-color .3s;
+  position:fixed; top:12px; right:16px;
+  display:flex; align-items:center; gap:6px; z-index:100;
 }
-.theme-label { font-family:'Space Mono',monospace; font-size:.48rem; letter-spacing:2px; text-transform:uppercase; color:var(--text-sub); margin-right:4px; }
+
 .theme-swatch { width:22px; height:22px; border-radius:6px; cursor:pointer; border:2px solid transparent; transition:transform .15s,border-color .15s; flex-shrink:0; }
 .theme-swatch:hover { transform:scale(1.15); }
 .theme-swatch.active { border-color:var(--accent) !important; }
@@ -73,7 +70,7 @@ body { background:var(--bg); color:var(--text-main); font-family:'Syne',sans-ser
 .swatch-white { background:#f0f0f0; border-color:#ccc; }
 .swatch-aqua  { background:#7ecece; border-color:#5aafaf; }
 .swatch-cream { background:#f5e6cc; border-color:#c8b090; }
-.swatch-slate { background:#2a3558; border-color:#4a5888; }
+.swatch-slate { background:#1C6EC4; border-color:#1558a0; }
 
 /* ── CONTAINER ───────────────────────────────────────────────────────── */
 .container { position:relative; z-index:1; max-width:1500px; margin:0 auto; padding:40px 30px; }
@@ -114,10 +111,11 @@ header p { font-family:'Space Mono',monospace; font-size:.7rem; letter-spacing:3
 /* ── SUBJECT CARD ────────────────────────────────────────────────────── */
 .subject {
   background:var(--pending-bg); border:1.5px solid var(--pending-border);
-  border-radius:10px; padding:8px 10px 8px 10px;
+  border-radius:10px; padding:8px 10px 10px 10px;
   cursor:default; transition:all .18s ease;
   position:relative; user-select:none;
   display:flex; flex-direction:column; gap:4px;
+  overflow:visible;
 }
 .subject.clickable { cursor:pointer; }
 .subject.clickable:hover { transform:translateY(-2px); filter:brightness(1.12); }
@@ -142,9 +140,10 @@ header p { font-family:'Space Mono',monospace; font-size:.7rem; letter-spacing:3
 /* Name — below the ID, never shrinks, card grows naturally */
 .subject-name {
   font-size:.75rem; font-weight:600;
-  color:var(--pending-text); line-height:1.28;
+  color:var(--pending-text); line-height:1.35;
   transition:color .18s; display:block;
   padding-right:14px; /* room for pip */
+  overflow:visible; padding-bottom:2px;
 }
 
 /* Status pip — top right */
@@ -245,7 +244,6 @@ header p { font-family:'Space Mono',monospace; font-size:.7rem; letter-spacing:3
 
 <!-- THEME SWITCHER -->
 <div class="theme-switcher">
-  <span class="theme-label">Tema</span>
   <div class="theme-swatch swatch-dark active"  title="Oscuro"     onclick="setTheme('dark',this)"></div>
   <div class="theme-swatch swatch-white"         title="Blanco"     onclick="setTheme('white',this)"></div>
   <div class="theme-swatch swatch-aqua"          title="Verde agua" onclick="setTheme('aqua',this)"></div>
@@ -298,8 +296,8 @@ header p { font-family:'Space Mono',monospace; font-size:.7rem; letter-spacing:3
 
 // ── SUPABASE CONFIG ──────────────────────────────────────────────────────────
 // Replace these with your actual Supabase project URL and anon key
-const SUPABASE_URL = 'https://zklwrgtsvxhpskvsohyn.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_iDjxFjJMiyRJGc2pb3JD7w_HnnW7bKn';
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
 const USER_ID = 'default'; // Single-user app; change to auth user ID if needed
 
 async function sbFetch(path, opts = {}) {
@@ -481,19 +479,37 @@ const subjects = {
   opt2:{ name:'', tramo:3, prereqsApproved:[], optional:true, editable:true, label:'Optativa 2' },
 };
 
-// Only ciclo → ciclo arrows
+// Correlatividades reales — solo las que están en el plan oficial
+// Cada flecha va de prerequisito → materia que lo requiere
 const arrowDefs = [
-  [544,602],[544,752],[544,751],
-  [602,751],[602,548],
-  [601,753],[601,279],[601,755],[601,758],
-  [752,753],[752,755],
-  [279,548],
-  [751,753],[751,755],[751,758],
+  // 602 Análisis Estadístico II
+  [544,602],
+  // 601 Mat. Financiera y Actuarial — (deps: 540,542 del tramo 2, no se dibujan)
+  // 544 Matemática Aplicada II — (dep: 542 tramo 2)
+  // 279 Adm. Financiera
+  [601,279],
+  // 752 Análisis Numérico
+  [544,752],
+  // 548 Dinero y Bancos
+  [279,548],[602,548],
+  // 751 Estadística Actuarial
+  [544,751],[602,751],
+  // 753 Biometría Actuarial
+  [601,753],[751,753],[752,753],
+  // 758 Bases Act. Inversiones (A5)
+  [601,758],[751,758],
+  // 754 T.Act. Seguros Personales (A1)
   [753,754],
-  [754,757],[754,756],[754,728],
-  [755,757],[755,728],
-  [756,728],
-  [758,717],[757,717],[746,717],
+  // 755 T.Act. Seguros Patrimoniales (A2)
+  [601,755],[751,755],[752,755],
+  // 756 T.Act. Fond. y Plan Jub. (A4)
+  [754,756],
+  // 757 T. Equilibrio Actuarial (A3)
+  [754,757],[755,757],
+  // 728 Práctica Profesional
+  [754,728],[755,728],[756,728],
+  // 717 Modelos y Proyecciones Actuariales
+  [757,717],[758,717],[746,717],
 ];
 
 const states = {};
@@ -627,15 +643,15 @@ function drawArrows() {
   const pRect = parent.getBoundingClientRect();
 
   const isLight = ['theme-white','theme-aqua','theme-cream'].some(c => document.body.classList.contains(c));
-  const pendingColor  = isLight ? 'rgba(100,100,140,.7)'  : 'rgba(55,55,100,.95)';
-  const approvedColor = isLight ? 'rgba(20,140,70,.55)'   : 'rgba(46,204,113,.55)';
+  const pendingColor  = isLight ? 'rgba(80,80,120,.65)'  : 'rgba(70,70,120,.9)';
+  const approvedColor = isLight ? 'rgba(20,140,70,.6)'   : 'rgba(46,204,113,.6)';
 
   const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
   const mkMarker = (mid, color) => {
     const m = document.createElementNS('http://www.w3.org/2000/svg','marker');
     m.setAttribute('id', mid);
-    m.setAttribute('markerWidth','7'); m.setAttribute('markerHeight','7');
-    m.setAttribute('refX','6'); m.setAttribute('refY','3');
+    m.setAttribute('markerWidth','6'); m.setAttribute('markerHeight','6');
+    m.setAttribute('refX','5'); m.setAttribute('refY','3');
     m.setAttribute('orient','auto');
     const p = document.createElementNS('http://www.w3.org/2000/svg','path');
     p.setAttribute('d','M0,0 L0,6 L6,3 z'); p.setAttribute('fill', color);
@@ -645,42 +661,64 @@ function drawArrows() {
   defs.appendChild(mkMarker('ao', approvedColor));
   svg.appendChild(defs);
 
+  // Count how many arrows leave each source card (for offset)
+  const outCount = {};
+  const outIdx   = {};
+  arrowDefs.forEach(([fId]) => { outCount[fId] = (outCount[fId]||0)+1; });
+  arrowDefs.forEach(([fId]) => { outIdx[fId] = 0; });
+
   arrowDefs.forEach(([fId, tId]) => {
-    const fEl = document.getElementById(`card-${fId}`);
-    const tEl = document.getElementById(`card-${tId}`);
+    const fEl = document.getElementById('card-'+fId);
+    const tEl = document.getElementById('card-'+tId);
     if (!fEl || !tEl) return;
     const fr = fEl.getBoundingClientRect();
     const tr = tEl.getBoundingClientRect();
 
-    const fCX = fr.left - pRect.left + fr.width  / 2;
-    const tCX = tr.left - pRect.left + tr.width  / 2;
-    const fCY = fr.top  - pRect.top  + fr.height / 2;
-    const tCY = tr.top  - pRect.top  + tr.height / 2;
-    const dy  = tCY - fCY;
-    const dx  = tCX - fCX;
+    const fL = fr.left - pRect.left, fR = fr.right - pRect.left;
+    const fT = fr.top  - pRect.top,  fB = fr.bottom - pRect.top;
+    const tL = tr.left - pRect.left, tR = tr.right - pRect.left;
+    const tT = tr.top  - pRect.top,  tB = tr.bottom - pRect.top;
+    const fCX = fL + fr.width/2,  fCY = fT + fr.height/2;
+    const tCX = tL + tr.width/2,  tCY = tT + tr.height/2;
+
+    const dy = tCY - fCY;
+    const dx = tCX - fCX;
+
+    // Spread multiple arrows from same source
+    const n = outCount[fId] || 1;
+    const i = outIdx[fId] || 0;
+    outIdx[fId] = i + 1;
+    const spread = n > 1 ? (i/(n-1) - 0.5) * fr.width * 0.6 : 0;
 
     let x1, y1, x2, y2, cpx1, cpy1, cpx2, cpy2;
-    if (dy > Math.abs(dx) * 0.5) {
-      x1 = fCX; y1 = fr.bottom - pRect.top;
-      x2 = tCX; y2 = tr.top    - pRect.top - 2;
-      const d = Math.max(Math.abs(y2-y1)*.4, 18);
+
+    if (Math.abs(dy) > Math.abs(dx) * 0.7) {
+      // Vertical: exit bottom-center (spread), enter top-center
+      x1 = fCX + spread; y1 = fB;
+      // Find entry point — spread on target too
+      const inCount = arrowDefs.filter(([,t]) => t===tId).length;
+      const inIdx   = arrowDefs.filter(([,t]) => t===tId).findIndex(([f,t]) => f===fId);
+      const tSpread = inCount > 1 ? (inIdx/(inCount-1) - 0.5) * tr.width * 0.5 : 0;
+      x2 = tCX + tSpread; y2 = tT;
+      const d = Math.max(Math.abs(y2-y1)*.45, 25);
       cpx1=x1; cpy1=y1+d; cpx2=x2; cpy2=y2-d;
     } else {
-      x1 = fr.right - pRect.left; y1 = fCY;
-      x2 = tr.left  - pRect.left - 2; y2 = tCY;
-      const d = Math.max(Math.abs(x2-x1)*.4, 18);
+      // Horizontal: exit right, enter left
+      x1 = fR; y1 = fCY + spread;
+      x2 = tL; y2 = tCY;
+      const d = Math.max(Math.abs(x2-x1)*.45, 25);
       cpx1=x1+d; cpy1=y1; cpx2=x2-d; cpy2=y2;
     }
 
-    const approved = states[fId] === 'approved';
+    const approved = states[fId]==='approved';
     const stroke = approved
-      ? (isLight ? 'rgba(20,140,70,.2)' : 'rgba(46,204,113,.2)')
-      : (isLight ? 'rgba(100,100,140,.32)' : 'rgba(42,42,85,.9)');
+      ? (isLight ? 'rgba(20,140,70,.25)' : 'rgba(46,204,113,.3)')
+      : (isLight ? 'rgba(80,80,130,.3)'  : 'rgba(60,60,110,.75)');
 
     const path = document.createElementNS('http://www.w3.org/2000/svg','path');
     path.setAttribute('d',`M${x1},${y1} C${cpx1},${cpy1} ${cpx2},${cpy2} ${x2},${y2}`);
     path.setAttribute('stroke', stroke);
-    path.setAttribute('stroke-width','1.3');
+    path.setAttribute('stroke-width','1.4');
     path.setAttribute('fill','none');
     path.setAttribute('marker-end', approved ? 'url(#ao)' : 'url(#ad)');
     svg.appendChild(path);
@@ -690,11 +728,15 @@ function drawArrows() {
 // ── STATS ────────────────────────────────────────────────────────────────────
 function renderStats() {
   const div = document.getElementById('stats');
-  const nonOpt = Object.keys(subjects).filter(id => !subjects[id].optional);
-  const total = nonOpt.length;
+  // Include optativas only if they have a name filled in
+  const allIds = Object.keys(subjects).filter(id => {
+    if (!subjects[id].optional) return true;
+    return subjects[id].name && subjects[id].name.trim().length > 0;
+  });
+  const total = allIds.length;
   const c = {approved:0,regular:0,available:0,pending:0};
-  nonOpt.forEach(id => c[states[id]]++);
-  const pct = Math.round(c.approved / total * 100);
+  allIds.forEach(id => c[states[id]]++);
+  const pct = total > 0 ? Math.round(c.approved / total * 100) : 0;
   div.innerHTML = `
     <div class="stat s-approved"><div class="stat-number">${c.approved}</div><div class="stat-label">Aprobadas</div></div>
     <div class="stat s-regular"><div class="stat-number">${c.regular}</div><div class="stat-label">Regulares</div></div>
