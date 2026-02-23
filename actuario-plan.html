@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Actuario · Plan de Estudios</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ── THEMES ──────────────────────────────────────────────────────────── */
+:root {
+  --bg:#0a0a0f; --surface:#13131f; --border:#1e1e30;
+  --pending-bg:#111120; --pending-border:#252540; --pending-text:#3a3a58;
+  --regular-bg:#1a1500; --regular-border:#e6b800; --regular-text:#e6b800;
+  --approved-bg:#001a0a; --approved-border:#2ecc71; --approved-text:#2ecc71;
+  --available-bg:#15151f; --available-border:#d0d0e8; --available-text:#d0d0e8;
+  --accent:#ff6b35; --text-main:#c0c0d0; --text-sub:#3a3a5a;
+  --stat-label-color:#3a3a5a; --header-color:#fff;
+}
+body.theme-white {
+  --bg:#f0f0f0; --surface:#fff; --border:#d5d5e0;
+  --pending-bg:#e8e8f0; --pending-border:#b0b0c8; --pending-text:#8888a8;
+  --regular-bg:#fffbe6; --regular-border:#c8a000; --regular-text:#996600;
+  --approved-bg:#e6f9ee; --approved-border:#22a55a; --approved-text:#1a7a44;
+  --available-bg:#f8f8ff; --available-border:#555580; --available-text:#333360;
+  --accent:#e85520; --text-main:#222230; --text-sub:#8888a0;
+  --stat-label-color:#9090a8; --header-color:#111120;
+}
+body.theme-aqua {
+  --bg:#e8f7f5; --surface:#fff; --border:#b8ddd9;
+  --pending-bg:#dff0ee; --pending-border:#9fcbc7; --pending-text:#6aaba6;
+  --regular-bg:#fffbe6; --regular-border:#c8a000; --regular-text:#8a6d00;
+  --approved-bg:#e0f5e9; --approved-border:#1fa055; --approved-text:#186640;
+  --available-bg:#f0fffe; --available-border:#2a9090; --available-text:#1a6060;
+  --accent:#0d7a72; --text-main:#1a3a38; --text-sub:#6a9a96;
+  --stat-label-color:#6a9a96; --header-color:#0d3a36;
+}
+body.theme-cream {
+  --bg:#f5f0e8; --surface:#faf7f0; --border:#ddd5c0;
+  --pending-bg:#ede8de; --pending-border:#bdb098; --pending-text:#9a8e78;
+  --regular-bg:#fff8e0; --regular-border:#c08000; --regular-text:#7a5200;
+  --approved-bg:#e6f2e8; --approved-border:#2a9050; --approved-text:#1a6035;
+  --available-bg:#f8f4ec; --available-border:#5a5040; --available-text:#3a3028;
+  --accent:#c05020; --text-main:#3a3028; --text-sub:#9a8e78;
+  --stat-label-color:#9a8e78; --header-color:#2a2018;
+}
+body.theme-slate {
+  --bg:#1a1f2e; --surface:#222840; --border:#2e3550;
+  --pending-bg:#1e2438; --pending-border:#353e60; --pending-text:#4a5580;
+  --regular-bg:#1e1a00; --regular-border:#e6b800; --regular-text:#e6b800;
+  --approved-bg:#001820; --approved-border:#00ccaa; --approved-text:#00ccaa;
+  --available-bg:#20253a; --available-border:#7090d0; --available-text:#a0b8e8;
+  --accent:#6090ff; --text-main:#a0b0d0; --text-sub:#404870;
+  --stat-label-color:#404870; --header-color:#d0e0ff;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text-main); font-family:'Syne',sans-serif; min-height:100vh; transition:background .3s,color .3s; }
+
+/* ── THEME SWITCHER ──────────────────────────────────────────────────── */
+.theme-switcher {
+  position:fixed; top:20px; right:24px;
+  display:flex; align-items:center; gap:8px; z-index:100;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:12px; padding:8px 12px;
+  box-shadow:0 4px 20px rgba(0,0,0,.2);
+  transition:background .3s,border-color .3s;
+}
+.theme-label { font-family:'Space Mono',monospace; font-size:.48rem; letter-spacing:2px; text-transform:uppercase; color:var(--text-sub); margin-right:4px; }
+.theme-swatch { width:22px; height:22px; border-radius:6px; cursor:pointer; border:2px solid transparent; transition:transform .15s,border-color .15s; flex-shrink:0; }
+.theme-swatch:hover { transform:scale(1.15); }
+.theme-swatch.active { border-color:var(--accent) !important; }
+.swatch-dark  { background:#0a0a0f; border-color:#444; }
+.swatch-white { background:#f0f0f0; border-color:#ccc; }
+.swatch-aqua  { background:#7ecece; border-color:#5aafaf; }
+.swatch-cream { background:#f5e6cc; border-color:#c8b090; }
+.swatch-slate { background:#2a3558; border-color:#4a5888; }
+
+/* ── CONTAINER ───────────────────────────────────────────────────────── */
+.container { position:relative; z-index:1; max-width:1500px; margin:0 auto; padding:40px 30px; }
+
+header { text-align:center; margin-bottom:32px; }
+header h1 { font-weight:800; font-size:2.8rem; letter-spacing:-1px; color:var(--header-color); text-transform:uppercase; transition:color .3s; }
+header h1 span { color:var(--accent); }
+header p { font-family:'Space Mono',monospace; font-size:.7rem; letter-spacing:3px; color:var(--text-sub); margin-top:6px; text-transform:uppercase; transition:color .3s; }
+
+/* ── STATS ───────────────────────────────────────────────────────────── */
+.stats { display:flex; justify-content:center; margin-bottom:32px; background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; width:fit-content; margin-left:auto; margin-right:auto; transition:background .3s,border-color .3s; }
+.stat { padding:14px 26px; text-align:center; border-right:1px solid var(--border); transition:border-color .3s; }
+.stat:last-child { border-right:none; }
+.stat-number { font-family:'Syne',sans-serif; font-weight:800; font-size:1.7rem; line-height:1; }
+.stat-label { font-family:'Space Mono',monospace; font-size:.52rem; letter-spacing:2px; text-transform:uppercase; color:var(--stat-label-color); margin-top:4px; transition:color .3s; }
+.s-approved .stat-number { color:var(--approved-border); }
+.s-regular  .stat-number { color:var(--regular-border); }
+.s-available .stat-number { color:var(--available-border); }
+.s-pending  .stat-number { color:var(--pending-text); }
+.s-pct      .stat-number { color:var(--accent); }
+.s-total    .stat-number { color:var(--header-color); }
+
+/* ── LEGEND ──────────────────────────────────────────────────────────── */
+.legend { display:flex; justify-content:center; gap:24px; margin-bottom:36px; }
+.legend-item { display:flex; align-items:center; gap:8px; font-family:'Space Mono',monospace; font-size:.6rem; letter-spacing:1px; color:var(--text-sub); text-transform:uppercase; transition:color .3s; }
+.legend-dot { width:12px; height:12px; border-radius:3px; border:2px solid; transition:all .3s; }
+.legend-dot.pending   { background:var(--pending-bg);  border-color:var(--pending-border); }
+.legend-dot.available { background:var(--available-bg);border-color:var(--available-border); }
+.legend-dot.regular   { background:var(--regular-bg);  border-color:var(--regular-border); }
+.legend-dot.approved  { background:var(--approved-bg); border-color:var(--approved-border); }
+
+/* ── TRAMO ROWS ──────────────────────────────────────────────────────── */
+.section-row { display:flex; align-items:stretch; border:1px solid var(--border); border-radius:14px; overflow:hidden; background:var(--surface); margin-bottom:10px; transition:background .3s,border-color .3s; }
+.section-label { width:130px; min-width:130px; display:flex; align-items:center; justify-content:center; padding:16px 10px; font-family:'Space Mono',monospace; font-size:.58rem; letter-spacing:2px; text-transform:uppercase; color:var(--accent); border-right:1px solid var(--border); text-align:center; line-height:1.7; transition:color .3s,border-color .3s; }
+.section-subjects { flex:1; display:grid; grid-template-columns:repeat(5,1fr); gap:10px; padding:12px; }
+.section-subjects.cols-6 { grid-template-columns:repeat(6,1fr); }
+
+/* ── SUBJECT CARD ────────────────────────────────────────────────────── */
+.subject {
+  background:var(--pending-bg); border:1.5px solid var(--pending-border);
+  border-radius:10px; padding:8px 10px 8px 10px;
+  cursor:default; transition:all .18s ease;
+  position:relative; user-select:none;
+  display:flex; flex-direction:column; gap:4px;
+}
+.subject.clickable { cursor:pointer; }
+.subject.clickable:hover { transform:translateY(-2px); filter:brightness(1.12); }
+
+.subject.available { background:var(--available-bg); border-color:var(--available-border); }
+.subject.available .subject-name { color:var(--available-text); }
+.subject.regular   { background:var(--regular-bg);   border-color:var(--regular-border);   box-shadow:0 0 12px rgba(230,184,0,.12); }
+.subject.regular   .subject-name { color:var(--regular-text); }
+.subject.approved  { background:var(--approved-bg);  border-color:var(--approved-border);  box-shadow:0 0 12px rgba(46,204,113,.12); }
+.subject.approved  .subject-name { color:var(--approved-text); }
+
+/* ID — top left, always fixed, first in DOM */
+.subject-code {
+  font-family:'Space Mono',monospace; font-size:.56rem; font-weight:700;
+  color:var(--pending-border); line-height:1; pointer-events:none;
+  transition:color .18s; flex-shrink:0;
+}
+.subject.available .subject-code { color:var(--available-border); opacity:.6; }
+.subject.regular   .subject-code { color:var(--regular-border);   opacity:.75; }
+.subject.approved  .subject-code { color:var(--approved-border);  opacity:.75; }
+
+/* Name — below the ID, never shrinks, card grows naturally */
+.subject-name {
+  font-size:.75rem; font-weight:600;
+  color:var(--pending-text); line-height:1.28;
+  transition:color .18s; display:block;
+  padding-right:14px; /* room for pip */
+}
+
+/* Status pip — top right */
+.status-pip { position:absolute; top:8px; right:8px; width:6px; height:6px; border-radius:50%; transition:background .18s; }
+.subject.available .status-pip { background:var(--available-border); opacity:.5; }
+.subject.regular   .status-pip { background:var(--regular-border); }
+.subject.approved  .status-pip { background:var(--approved-border); }
+
+/* Optativa editable input */
+.opt-name-input {
+  background:transparent; border:none; outline:none;
+  font-family:'Syne',sans-serif; font-size:.75rem; font-weight:600;
+  color:var(--pending-text); width:100%; cursor:text;
+  padding:0; line-height:1.28; transition:color .18s;
+  padding-right:14px;
+}
+.subject.available .opt-name-input { color:var(--available-text); }
+.subject.regular   .opt-name-input { color:var(--regular-text); }
+.subject.approved  .opt-name-input { color:var(--approved-text); }
+.opt-name-input::placeholder { opacity:.35; font-style:italic; }
+.opt-name-input:focus { border-bottom:1px dashed var(--accent); }
+
+.optativa {}
+
+/* ── CICLO ───────────────────────────────────────────────────────────── */
+.ciclo-wrapper { border:1px solid var(--border); border-radius:14px; overflow:hidden; background:var(--surface); margin-top:10px; transition:background .3s,border-color .3s; }
+.ciclo-header { padding:14px 20px; border-bottom:1px solid var(--border); font-family:'Space Mono',monospace; font-size:.58rem; letter-spacing:3px; text-transform:uppercase; color:var(--accent); transition:color .3s,border-color .3s; }
+.ciclo-body { padding:20px; position:relative; }
+#arrows-svg { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; }
+.ciclo-grid { position:relative; z-index:1; display:grid; grid-template-columns:repeat(5,1fr); grid-auto-rows:auto; gap:12px 10px; }
+
+/* Optativas — floating cards below everything */
+.optativas-float {
+  margin-top:16px;
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+}
+.optativas-float-label {
+  font-family:'Space Mono',monospace; font-size:.52rem; letter-spacing:2px;
+  text-transform:uppercase; color:var(--text-sub); white-space:nowrap;
+  transition:color .3s;
+}
+#optativas-row {
+  display:flex; gap:10px; flex-wrap:wrap;
+}
+#optativas-row .subject {
+  width:200px; flex-shrink:0;
+}
+
+
+/* ── LOADING ──────────────────────────────────────────────────────────── */
+@keyframes ldot { 0%,80%,100%{transform:scale(0.6);opacity:.4} 40%{transform:scale(1);opacity:1} }
+.loader-dot {
+  width:10px; height:10px; border-radius:50%;
+  background:var(--accent);
+  animation:ldot 1.2s infinite ease-in-out both;
+}
+
+/* ── SAVE INDICATOR ──────────────────────────────────────────────────── */
+.save-indicator {
+  position:fixed; bottom:20px; right:24px; z-index:200;
+  padding:8px 16px; border-radius:10px;
+  font-family:'Space Mono',monospace; font-size:.6rem; letter-spacing:1px;
+  text-transform:uppercase; pointer-events:none;
+  transition:opacity .4s;
+}
+.save-indicator.saving { background:var(--surface); border:1px solid var(--border); color:var(--text-sub); }
+.save-indicator.saved  { background:var(--approved-bg); border:1px solid var(--approved-border); color:var(--approved-text); }
+.save-indicator.error  { background:var(--regular-bg); border:1px solid var(--regular-border); color:var(--regular-text); }
+
+/* ── TOOLTIP ─────────────────────────────────────────────────────────── */
+.tooltip { position:fixed; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:10px 14px; font-family:'Space Mono',monospace; font-size:.6rem; color:var(--text-main); pointer-events:none; opacity:0; transition:opacity .12s; z-index:9999; max-width:260px; line-height:1.8; }
+.tooltip.visible { opacity:1; }
+</style>
+</head>
+<body>
+
+<!-- LOADING SCREEN -->
+<div id="loading-screen" style="
+  position:fixed;inset:0;z-index:9999;
+  background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:20px;
+  transition:background .3s;
+">
+  <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:2rem;letter-spacing:-1px;color:var(--header-color);text-transform:uppercase;">
+    Actuario <span style="color:var(--accent)">·</span> Plan de Estudios
+  </div>
+  <div style="display:flex;gap:6px;align-items:center;">
+    <div class="loader-dot" style="animation-delay:0s"></div>
+    <div class="loader-dot" style="animation-delay:.15s"></div>
+    <div class="loader-dot" style="animation-delay:.3s"></div>
+  </div>
+  <div style="font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:3px;color:var(--text-sub);text-transform:uppercase;">Cargando tu progreso...</div>
+</div>
+
+<!-- SAVE INDICATOR -->
+<div id="save-indicator" class="save-indicator" style="opacity:0"></div>
+
+<!-- THEME SWITCHER -->
+<div class="theme-switcher">
+  <span class="theme-label">Tema</span>
+  <div class="theme-swatch swatch-dark active"  title="Oscuro"     onclick="setTheme('dark',this)"></div>
+  <div class="theme-swatch swatch-white"         title="Blanco"     onclick="setTheme('white',this)"></div>
+  <div class="theme-swatch swatch-aqua"          title="Verde agua" onclick="setTheme('aqua',this)"></div>
+  <div class="theme-swatch swatch-cream"         title="Cremita"    onclick="setTheme('cream',this)"></div>
+  <div class="theme-swatch swatch-slate"         title="Pizarrón"   onclick="setTheme('slate',this)"></div>
+</div>
+
+<div id="app" style="display:none"><div class="container">
+  <header>
+    <h1>Actuario <span>·</span> Plan de Estudios</h1>
+    <p>Correlatividades · FCE · UBA</p>
+  </header>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot pending"></div> Pendiente</div>
+    <div class="legend-item"><div class="legend-dot available"></div> Puedo cursar</div>
+    <div class="legend-item"><div class="legend-dot regular"></div> Regular</div>
+    <div class="legend-item"><div class="legend-dot approved"></div> Aprobada</div>
+  </div>
+
+  <div class="section-row">
+    <div class="section-label">Primer<br>Tramo</div>
+    <div class="section-subjects cols-6" id="tramo1-subjects"></div>
+  </div>
+  <div class="section-row">
+    <div class="section-label">Segundo<br>Tramo</div>
+    <div class="section-subjects" id="tramo2-subjects"></div>
+  </div>
+
+  <div class="ciclo-wrapper">
+    <div class="ciclo-header">Ciclo Profesional</div>
+    <div class="ciclo-body">
+      <svg id="arrows-svg"></svg>
+      <div class="ciclo-grid" id="ciclo-grid"></div>
+    </div>
+  </div>
+
+  <!-- Optativas: loose cards outside any wrapper -->
+  <div class="optativas-float">
+    <span class="optativas-float-label">Optativas</span>
+    <div id="optativas-row"></div>
+  </div>
+</div></div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+
+// ── SUPABASE CONFIG ──────────────────────────────────────────────────────────
+// Replace these with your actual Supabase project URL and anon key
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const USER_ID = 'default'; // Single-user app; change to auth user ID if needed
+
+async function sbFetch(path, opts = {}) {
+  const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': opts.prefer || '',
+      ...opts.headers
+    },
+    ...opts
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err);
+  }
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+// ── SAVE / LOAD ──────────────────────────────────────────────────────────────
+let saveTimer = null;
+let currentTheme = 'dark';
+
+function showSaving() {
+  const el = document.getElementById('save-indicator');
+  el.textContent = 'Guardando...';
+  el.className = 'save-indicator saving';
+  el.style.opacity = '1';
+}
+function showSaved() {
+  const el = document.getElementById('save-indicator');
+  el.textContent = '✓ Guardado';
+  el.className = 'save-indicator saved';
+  setTimeout(() => { el.style.opacity = '0'; }, 1800);
+}
+function showError() {
+  const el = document.getElementById('save-indicator');
+  el.textContent = '✗ Error al guardar';
+  el.className = 'save-indicator error';
+  setTimeout(() => { el.style.opacity = '0'; }, 3000);
+}
+
+async function saveProgress() {
+  showSaving();
+  // Build payload
+  const statesPayload = {};
+  for (const id in states) statesPayload[id] = states[id];
+  const optNames = { opt1: subjects.opt1.name, opt2: subjects.opt2.name };
+  try {
+    await sbFetch('user_progress?user_id=eq.' + USER_ID, {
+      method: 'DELETE',
+      prefer: 'return=minimal'
+    });
+    await sbFetch('user_progress', {
+      method: 'POST',
+      prefer: 'return=minimal',
+      body: JSON.stringify({
+        user_id: USER_ID,
+        states: statesPayload,
+        opt_names: optNames,
+        theme: currentTheme,
+        updated_at: new Date().toISOString()
+      })
+    });
+    showSaved();
+  } catch(e) {
+    console.error('Save error:', e);
+    showError();
+  }
+}
+
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveProgress, 800);
+}
+
+async function loadProgress() {
+  try {
+    const data = await sbFetch('user_progress?user_id=eq.' + USER_ID + '&limit=1');
+    if (data && data.length > 0) {
+      const row = data[0];
+      // Restore states
+      if (row.states) {
+        for (const id in row.states) {
+          if (states[id] !== undefined) states[id] = row.states[id];
+        }
+      }
+      // Restore opt names
+      if (row.opt_names) {
+        if (row.opt_names.opt1 !== undefined) subjects.opt1.name = row.opt_names.opt1;
+        if (row.opt_names.opt2 !== undefined) subjects.opt2.name = row.opt_names.opt2;
+      }
+      // Restore theme
+      if (row.theme) {
+        currentTheme = row.theme;
+        applyTheme(row.theme);
+      }
+    }
+  } catch(e) {
+    console.error('Load error:', e);
+  }
+}
+
+function applyTheme(name) {
+  document.body.className = name === 'dark' ? '' : 'theme-' + name;
+  document.querySelectorAll('.theme-swatch').forEach(s => s.classList.remove('active'));
+  const swatchMap = { dark: 'swatch-dark', white: 'swatch-white', aqua: 'swatch-aqua', cream: 'swatch-cream', slate: 'swatch-slate' };
+  const el = document.querySelector('.' + (swatchMap[name] || 'swatch-dark'));
+  if (el) el.classList.add('active');
+  requestAnimationFrame(drawArrows);
+}
+
+// ── THEME ────────────────────────────────────────────────────────────────────
+function setTheme(name, el) {
+  currentTheme = name;
+  applyTheme(name);
+  scheduleSave();
+}
+
+
+// ── DATA ─────────────────────────────────────────────────────────────────────
+// 6 columns max, rows = dependency depth
+// Optativas are rendered separately BELOW the grid
+
+const subjects = {
+  // Tramo 1
+  245: { name:'Álgebra',                          tramo:1, prereqsApproved:[] },
+  241: { name:'Análisis Matemático 1',             tramo:1, prereqsApproved:[] },
+  242: { name:'Economía',                          tramo:1, prereqsApproved:[] },
+  246: { name:'Historia Ec. y Social',             tramo:1, prereqsApproved:[] },
+  255: { name:'Análisis Contable',                 tramo:1, prereqsApproved:[] },
+  256: { name:'Inst. Gobierno y Ec. Política',     tramo:1, prereqsApproved:[] },
+  // Tramo 2
+  540: { name:'Análisis Estadístico',              tramo:2, prereqsApproved:[] },
+  542: { name:'Matemática Aplicada',               tramo:2, prereqsApproved:[] },
+  262: { name:'Macroeconomía I',                   tramo:2, prereqsApproved:[] },
+  274: { name:'Sistemas Administrativos',          tramo:2, prereqsApproved:[] },
+  462: { name:'Derecho Empresarial',               tramo:2, prereqsApproved:[] },
+
+  // ── Ciclo Profesional (6 cols, rows by dependency depth) ──────────────────
+  // Row 0 — solo requieren tramo 2
+  602: { name:'Análisis Estadístico II',           tramo:3, col:0, row:0, prereqsApproved:[540,542] },
+  601: { name:'Mat. Financiera y Actuarial',       tramo:3, col:1, row:0, prereqsApproved:[540,542] },
+  544: { name:'Matemática Aplicada II',            tramo:3, col:2, row:0, prereqsApproved:[542] },
+  291: { name:'Microeconomía p/Economistas',       tramo:3, col:3, row:0, prereqsApproved:[542] },
+  603: { name:'Dcho. Financiero, Seg. y S.S.',     tramo:3, col:4, row:0, prereqsApproved:[462] },
+  746: { name:'Computación Científica Actuarial',  tramo:3, col:0, row:1, prereqsApproved:[540,542] },
+
+  // Row 1
+  279: { name:'Administración Financiera',         tramo:3, col:1, row:1, prereqsApproved:[601] },
+  752: { name:'Análisis Numérico',                 tramo:3, col:2, row:1, prereqsApproved:[544] },
+
+  // Row 2
+  548: { name:'Dinero y Bancos',                   tramo:3, col:1, row:2, prereqsApproved:[279,602] },
+
+  // Row 3
+  751: { name:'Estadística Actuarial',             tramo:3, col:0, row:3, prereqsApproved:[544,602] },
+
+  // Row 4
+  753: { name:'Biometría Actuarial',               tramo:3, col:1, row:4, prereqsApproved:[601,751,752] },
+  758: { name:'Bases Act. Inversiones (A5)',        tramo:3, col:4, row:4, prereqsApproved:[601,751] },
+
+  // Row 5
+  754: { name:'T.Act. Seguros Personales (A1)',    tramo:3, col:1, row:5, prereqsApproved:[753] },
+  755: { name:'T.Act. Seguros Patrimoniales (A2)', tramo:3, col:2, row:5, prereqsApproved:[601,751,752] },
+
+  // Row 6
+  756: { name:'T.Act. Fond. y Plan Jub. (A4)',     tramo:3, col:1, row:6, prereqsApproved:[754] },
+  757: { name:'T. Equilibrio Actuarial (A3)',       tramo:3, col:2, row:6, prereqsApproved:[754,755] },
+
+  // Row 7
+  728: { name:'Práctica Profesional del Actuario', tramo:3, col:3, row:7, prereqsApproved:[754,755,756] },
+  717: { name:'Modelos y Proyecciones Actuariales',tramo:3, col:4, row:7, prereqsApproved:[757,758,746] },
+
+  // Optativas — rendered separately, no col/row
+  opt1:{ name:'', tramo:3, prereqsApproved:[], optional:true, editable:true, label:'Optativa 1' },
+  opt2:{ name:'', tramo:3, prereqsApproved:[], optional:true, editable:true, label:'Optativa 2' },
+};
+
+// Only ciclo → ciclo arrows
+const arrowDefs = [
+  [544,602],[544,752],[544,751],
+  [602,751],[602,548],
+  [601,753],[601,279],[601,755],[601,758],
+  [752,753],[752,755],
+  [279,548],
+  [751,753],[751,755],[751,758],
+  [753,754],
+  [754,757],[754,756],[754,728],
+  [755,757],[755,728],
+  [756,728],
+  [758,717],[757,717],[746,717],
+];
+
+const states = {};
+
+function initStates() {
+  for (const id in subjects) states[id] = 'pending';
+  [245,241,242,246,255,256, 540,542,262,274,462].forEach(id => { states[id] = 'approved'; });
+  recalc();
+}
+
+function allApproved(ids) { return ids.every(id => states[id] === 'approved'); }
+
+function prereqsMet(id) {
+  const s = subjects[id];
+  if (s.optional || s.tramo <= 2) return true;
+  if (!s.prereqsApproved.length) return true;
+  return allApproved(s.prereqsApproved);
+}
+
+function recalc() {
+  for (const id in subjects) {
+    if (states[id] === 'approved' || states[id] === 'regular') continue;
+    states[id] = prereqsMet(id) ? 'available' : 'pending';
+  }
+}
+
+function cycle(id) {
+  const s = states[id];
+  if (s === 'pending') return;
+  states[id] = s === 'available' ? 'regular' : s === 'regular' ? 'approved' : 'available';
+  recalc();
+  renderAll();
+  scheduleSave();
+}
+
+// ── CARD ─────────────────────────────────────────────────────────────────────
+function makeCard(id) {
+  const subj = subjects[id];
+  const state = states[id];
+  const isOpt = subj.editable;
+
+  const div = document.createElement('div');
+  div.className = `subject ${state}${state !== 'pending' ? ' clickable' : ''}${subj.optional ? ' optativa' : ''}`;
+  div.id = `card-${id}`;
+
+  // Name / editable input
+  let nameEl;
+  if (isOpt) {
+    nameEl = document.createElement('input');
+    nameEl.type = 'text';
+    nameEl.className = 'opt-name-input';
+    nameEl.placeholder = 'Escribí la materia...';
+    nameEl.value = subj.name || '';
+    nameEl.addEventListener('input', e => { subj.name = e.target.value; scheduleSave(); });
+    nameEl.addEventListener('click', e => e.stopPropagation());
+  } else {
+    nameEl = document.createElement('span');
+    nameEl.className = 'subject-name' + (subj.name.length > 26 ? ' long' : '');
+    nameEl.textContent = subj.name;
+  }
+
+  // ID badge — bottom right
+  const codeEl = document.createElement('span');
+  codeEl.className = 'subject-code';
+  // For optativas: show "Opt. 1" / "Opt. 2"; for tramo subjects: show id number
+  codeEl.textContent = isOpt ? (subj.label || id) : (isNaN(id) ? '—' : id);
+
+  // Status pip
+  const pip = document.createElement('div');
+  pip.className = 'status-pip';
+
+  div.appendChild(codeEl);
+  div.appendChild(nameEl);
+  div.appendChild(pip);
+
+  if (state !== 'pending') div.addEventListener('click', () => cycle(id));
+
+  if (!isOpt) {
+    div.addEventListener('mouseenter', e => {
+      if (state === 'pending' && subj.prereqsApproved?.length) {
+        const missing = subj.prereqsApproved
+          .filter(p => states[p] !== 'approved')
+          .map(p => `${p} – ${subjects[p]?.name || p}`).join('\n');
+        if (missing) showTip(e, `Falta aprobar:\n${missing}`);
+      } else if (state === 'available') {
+        showTip(e, 'Click → Regular · Click 2× → Aprobada');
+      }
+    });
+    div.addEventListener('mousemove', moveTip);
+    div.addEventListener('mouseleave', hideTip);
+  }
+
+  return div;
+}
+
+// ── RENDER ───────────────────────────────────────────────────────────────────
+function renderTramos() {
+  const t1 = document.getElementById('tramo1-subjects');
+  const t2 = document.getElementById('tramo2-subjects');
+  t1.innerHTML = ''; t2.innerHTML = '';
+  [245,241,242,246,255,256].forEach(id => t1.appendChild(makeCard(id)));
+  [540,542,262,274,462].forEach(id => t2.appendChild(makeCard(id)));
+}
+
+function renderCiclo() {
+  const grid = document.getElementById('ciclo-grid');
+  grid.innerHTML = '';
+
+  for (const id in subjects) {
+    const s = subjects[id];
+    if (s.tramo !== 3 || s.optional) continue;
+    const card = makeCard(id);
+    card.style.gridColumn = s.col + 1;
+    card.style.gridRow    = s.row + 1;
+    grid.appendChild(card);
+  }
+
+  // Render optativas in the floating row
+  const optRow = document.getElementById('optativas-row');
+  optRow.innerHTML = '';
+  ['opt1','opt2'].forEach(id => optRow.appendChild(makeCard(id)));
+
+  requestAnimationFrame(() => requestAnimationFrame(drawArrows));
+}
+
+// ── ARROWS ───────────────────────────────────────────────────────────────────
+function drawArrows() {
+  const svg = document.getElementById('arrows-svg');
+  svg.innerHTML = '';
+  const parent = svg.parentElement;
+  const pRect = parent.getBoundingClientRect();
+
+  const isLight = ['theme-white','theme-aqua','theme-cream'].some(c => document.body.classList.contains(c));
+  const pendingColor  = isLight ? 'rgba(100,100,140,.7)'  : 'rgba(55,55,100,.95)';
+  const approvedColor = isLight ? 'rgba(20,140,70,.55)'   : 'rgba(46,204,113,.55)';
+
+  const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+  const mkMarker = (mid, color) => {
+    const m = document.createElementNS('http://www.w3.org/2000/svg','marker');
+    m.setAttribute('id', mid);
+    m.setAttribute('markerWidth','7'); m.setAttribute('markerHeight','7');
+    m.setAttribute('refX','6'); m.setAttribute('refY','3');
+    m.setAttribute('orient','auto');
+    const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d','M0,0 L0,6 L6,3 z'); p.setAttribute('fill', color);
+    m.appendChild(p); return m;
+  };
+  defs.appendChild(mkMarker('ad', pendingColor));
+  defs.appendChild(mkMarker('ao', approvedColor));
+  svg.appendChild(defs);
+
+  arrowDefs.forEach(([fId, tId]) => {
+    const fEl = document.getElementById(`card-${fId}`);
+    const tEl = document.getElementById(`card-${tId}`);
+    if (!fEl || !tEl) return;
+    const fr = fEl.getBoundingClientRect();
+    const tr = tEl.getBoundingClientRect();
+
+    const fCX = fr.left - pRect.left + fr.width  / 2;
+    const tCX = tr.left - pRect.left + tr.width  / 2;
+    const fCY = fr.top  - pRect.top  + fr.height / 2;
+    const tCY = tr.top  - pRect.top  + tr.height / 2;
+    const dy  = tCY - fCY;
+    const dx  = tCX - fCX;
+
+    let x1, y1, x2, y2, cpx1, cpy1, cpx2, cpy2;
+    if (dy > Math.abs(dx) * 0.5) {
+      x1 = fCX; y1 = fr.bottom - pRect.top;
+      x2 = tCX; y2 = tr.top    - pRect.top - 2;
+      const d = Math.max(Math.abs(y2-y1)*.4, 18);
+      cpx1=x1; cpy1=y1+d; cpx2=x2; cpy2=y2-d;
+    } else {
+      x1 = fr.right - pRect.left; y1 = fCY;
+      x2 = tr.left  - pRect.left - 2; y2 = tCY;
+      const d = Math.max(Math.abs(x2-x1)*.4, 18);
+      cpx1=x1+d; cpy1=y1; cpx2=x2-d; cpy2=y2;
+    }
+
+    const approved = states[fId] === 'approved';
+    const stroke = approved
+      ? (isLight ? 'rgba(20,140,70,.2)' : 'rgba(46,204,113,.2)')
+      : (isLight ? 'rgba(100,100,140,.32)' : 'rgba(42,42,85,.9)');
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d',`M${x1},${y1} C${cpx1},${cpy1} ${cpx2},${cpy2} ${x2},${y2}`);
+    path.setAttribute('stroke', stroke);
+    path.setAttribute('stroke-width','1.3');
+    path.setAttribute('fill','none');
+    path.setAttribute('marker-end', approved ? 'url(#ao)' : 'url(#ad)');
+    svg.appendChild(path);
+  });
+}
+
+// ── STATS ────────────────────────────────────────────────────────────────────
+function renderStats() {
+  const div = document.getElementById('stats');
+  const nonOpt = Object.keys(subjects).filter(id => !subjects[id].optional);
+  const total = nonOpt.length;
+  const c = {approved:0,regular:0,available:0,pending:0};
+  nonOpt.forEach(id => c[states[id]]++);
+  const pct = Math.round(c.approved / total * 100);
+  div.innerHTML = `
+    <div class="stat s-approved"><div class="stat-number">${c.approved}</div><div class="stat-label">Aprobadas</div></div>
+    <div class="stat s-regular"><div class="stat-number">${c.regular}</div><div class="stat-label">Regulares</div></div>
+    <div class="stat s-available"><div class="stat-number">${c.available}</div><div class="stat-label">Puedo cursar</div></div>
+    <div class="stat s-pending"><div class="stat-number">${c.pending}</div><div class="stat-label">Pendientes</div></div>
+    <div class="stat s-pct"><div class="stat-number">${pct}%</div><div class="stat-label">Aprobado</div></div>
+    <div class="stat s-total"><div class="stat-number">${total}</div><div class="stat-label">Total materias</div></div>`;
+}
+
+function renderAll() { renderStats(); renderTramos(); renderCiclo(); }
+
+// ── TOOLTIP ──────────────────────────────────────────────────────────────────
+const tip = document.getElementById('tooltip');
+let tv = false;
+function showTip(e,t){tip.innerHTML=t.replace(/\n/g,'<br>');tip.classList.add('visible');tv=true;moveTip(e);}
+function moveTip(e){if(!tv)return;tip.style.left=(e.clientX+16)+'px';tip.style.top=(e.clientY-8)+'px';}
+function hideTip(){tip.classList.remove('visible');tv=false;}
+
+window.addEventListener('resize', () => requestAnimationFrame(drawArrows));
+
+async function boot() {
+  initStates();
+  await loadProgress();
+  document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  renderAll();
+}
+boot();
+</script>
+</body>
+</html>
