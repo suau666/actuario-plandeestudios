@@ -464,22 +464,22 @@ const subjects = {
   544: { name:'Matemática Aplicada II',            tramo:3, col:0, row:0, prereqsApproved:[542] },
   602: { name:'Análisis Estadístico II',           tramo:3, col:1, row:0, prereqsApproved:[540,542] },
   601: { name:'Mat. Financiera y Actuarial',       tramo:3, col:2, row:0, prereqsApproved:[540,542] },
-  746: { name:'Computación Científica Actuarial',  tramo:3, col:0, row:3, prereqsApproved:[540,542] },
+  746: { name:'Computación Científica Actuarial',  tramo:3, col:1, row:4, prereqsApproved:[540,542] },
   291: { name:'Microeconomía p/Economistas',       tramo:3, col:4, row:0, prereqsApproved:[542] },
 
   752: { name:'Análisis Numérico',                 tramo:3, col:0, row:1, prereqsApproved:[544] },
   751: { name:'Estadística Actuarial',             tramo:3, col:1, row:1, prereqsApproved:[544,602] },
   279: { name:'Administración Financiera',         tramo:3, col:3, row:0, prereqsApproved:[601] },
-  603: { name:'Dcho. Financiero, Seg. y S.S.',     tramo:3, col:3, row:1, prereqsApproved:[462] },
-  548: { name:'Dinero y Bancos',                   tramo:3, col:4, row:1, prereqsApproved:[279,602] },
+  603: { name:'Dcho. Financiero, Seg. y S.S.',     tramo:3, col:4, row:1, prereqsApproved:[462] },
+  548: { name:'Dinero y Bancos',                   tramo:3, col:3, row:1, prereqsApproved:[279,602] },
 
   753: { name:'Biometría Actuarial',               tramo:3, col:1, row:2, prereqsApproved:[601,751,752] },
   758: { name:'Bases Act. Inversiones (A5)',        tramo:3, col:2, row:2, prereqsApproved:[601,751] },
   755: { name:'T.Act. Seguros Patrimoniales (A2)', tramo:3, col:3, row:2, prereqsApproved:[601,751,752] },
 
   754: { name:'T.Act. Seguros Personales (A1)',    tramo:3, col:1, row:3, prereqsApproved:[753] },
-  757: { name:'T. Equilibrio Actuarial (A3)',       tramo:3, col:3, row:3, prereqsApproved:[754,755] },
-  756: { name:'T.Act. Fond. y Plan Jub. (A4)',     tramo:3, col:4, row:3, prereqsApproved:[754] },
+  757: { name:'T. Equilibrio Actuarial (A3)',       tramo:3, col:4, row:3, prereqsApproved:[754,755] },
+  756: { name:'T.Act. Fond. y Plan Jub. (A4)',     tramo:3, col:3, row:3, prereqsApproved:[754] },
 
   717: { name:'Modelos y Proyecciones Actuariales',tramo:3, col:2, row:4, prereqsApproved:[757,758,746] },
   728: { name:'Práctica Profesional del Actuario', tramo:3, col:3, row:4, prereqsApproved:[754,755,756] },
@@ -490,32 +490,32 @@ const subjects = {
 };
 
 // Correlatividades — solo ciclo→ciclo, flujo top-down
-// Correlatividades exactas del plan
-// ORDER MATTERS for spread: first in list = leftmost entry point
+// Correlatividades — ORDER sets spread position (first=leftmost)
 const arrowDefs = [
-  // 752 Análisis Numérico ← 544
+  // 752 ← 544
   [544,752],
-  // 751 Estadística Actuarial ← 544, 602
+  // 751 ← 544, 602
   [544,751], [602,751],
-  // 548 Dinero y Bancos ← 279, 602
-  // 601→548 must enter TOP (601 is same row, but offset — handled by getSides)
-  [279,548], [601,548],
-  // 753 Biometría ← 752, 751, 601  (L→R top entry order)
+  // 548 (Dinero y Bancos) ← 279 enters top-right, 601 enters top-left
+  [601,548], [279,548],
+  // 603 (Dcho.) ← 601: exits bottom-RIGHT of 601, enters top-LEFT of 603
+  [601,603],
+  // 753 Biometría ← 752(left), 751(mid), 601(right)
   [752,753], [751,753], [601,753],
-  // 755 T.Act.Patr. ← 752, 751, 601  (L→R top entry order)
+  // 755 T.Act.Patr. ← 752(left), 751(mid), 601(right)
   [752,755], [751,755], [601,755],
-  // 758 Bases Inv. ← 601, 751  (751→758 special: exits bottom-right, enters top-left)
+  // 758 Bases Inv. ← 601(left exit 601), 751(right exit 751 → left entry 758)
   [601,758], [751,758],
-  // 754 T.Act.Pers. ← 753
+  // 754 ← 753
   [753,754],
-  // 756 Fond.Jub. ← 754
+  // 756 ← 754
   [754,756],
-  // 757 Equilibrio ← 754, 755
+  // 757 ← 754, 755
   [754,757], [755,757],
-  // 728 Práctica ← 754, 755, 756
+  // 728 ← 754, 755, 756
   [754,728], [755,728], [756,728],
-  // 717 Modelos ← 757, 758, 746
-  [757,717], [758,717], [746,717],
+  // 717 Modelos ← 758(top-left), 757(top-right), 746(from right→left horizontal)
+  [758,717], [757,717], [746,717],
 ];
 
 const states = {};
@@ -655,7 +655,6 @@ function drawArrows() {
   const colPending  = isLight ? 'rgba(90,90,140,.5)'  : 'rgba(100,100,160,.8)';
   const colApproved = isLight ? 'rgba(20,140,70,.5)'  : 'rgba(46,204,113,.5)';
 
-  // Markers
   const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
   ['ad','ao'].forEach((id,i) => {
     const col = i===0 ? colPending : colApproved;
@@ -671,110 +670,98 @@ function drawArrows() {
   });
   svg.appendChild(defs);
 
-  // Helper: get card center and bounds relative to SVG parent
   function bounds(el) {
     const r = el.getBoundingClientRect();
     const ox = pRect.left, oy = pRect.top;
-    return {
-      l: r.left-ox, r: r.right-ox,
-      t: r.top-oy,  b: r.bottom-oy,
-      cx: r.left-ox+r.width/2,
-      cy: r.top-oy+r.height/2,
-      w: r.width, h: r.height
-    };
+    return { l:r.left-ox, r:r.right-ox, t:r.top-oy, b:r.bottom-oy,
+             cx:r.left-ox+r.width/2, cy:r.top-oy+r.height/2, w:r.width, h:r.height };
   }
 
-  // Decide exit/entry sides based on relative position
-  // "mainly vertical" = target is clearly below (dy > |dx|*0.7)
-  // otherwise horizontal
-  function getSides(f, t) {
+  // Per-arrow side overrides: key = 'srcId-tgtId'
+  // mode 'v': exit bottom, enter top. mode 'h-r': exit right, enter left. mode 'h-l': exit left, enter right
+  const sideOverrides = {
+    '601-603': 'v',     // exits bottom-right of 601, enters top-left of 603 (handled by spread)
+    '279-548': 'v',     // enters top-right of 548 (handled by spread order)
+    '601-548': 'v',     // enters top-left of 548
+    '746-717': 'h-r',   // exits RIGHT of 746, enters LEFT of 717
+    '758-717': 'v',     // enters top-left of 717 (first in group)
+    '757-717': 'v',     // enters top-right of 717 (second in group)
+  };
+
+  function getSides(fId, tId, f, t) {
+    const key = fId+'-'+tId;
+    if (sideOverrides[key]) {
+      const ov = sideOverrides[key];
+      if (ov === 'v')   return { exitX:'cx', exitY:'b', entX:'cx', entY:'t', mode:'v' };
+      if (ov === 'h-r') return { exitX:'r',  exitY:'cy', entX:'l', entY:'cy', mode:'h' };
+      if (ov === 'h-l') return { exitX:'l',  exitY:'cy', entX:'r', entY:'cy', mode:'h' };
+    }
     const dy = t.cy - f.cy;
     const dx = t.cx - f.cx;
-    // If target is meaningfully below (dy > 0 and row is lower), prefer vertical
-    // Only go horizontal if target is on the SAME row (dy very small) or above
-    if (dy > 30) {
-      // Target is below — always exit bottom, enter top
-      return { fx:'cx', fy:'b', tx:'cx', ty:'t', mode:'v' };
-    } else if (dx > 0) {
-      // Same row or above, target to the right: exit right, enter left
-      return { fx:'r', fy:'cy', tx:'l', ty:'cy', mode:'h' };
-    } else {
-      // Same row or above, target to the left: exit left, enter right
-      return { fx:'l', fy:'cy', tx:'r', ty:'cy', mode:'h' };
-    }
+    if (dy > 30) return { exitX:'cx', exitY:'b', entX:'cx', entY:'t', mode:'v' };
+    if (dx > 0)  return { exitX:'r', exitY:'cy', entX:'l', entY:'cy', mode:'h' };
+    return             { exitX:'l', exitY:'cy', entX:'r', entY:'cy', mode:'h' };
   }
 
-  // Pre-group arrows by (sourceId+side) and (targetId+side) for spread
-  // We need two passes: first determine sides, then compute spreads
+  // Pre-group for spread
+  const exitGroups = {}, entryGroups = {};
   const arrowInfo = arrowDefs.map(([fId, tId]) => {
     const fEl = document.getElementById('card-'+fId);
     const tEl = document.getElementById('card-'+tId);
     if (!fEl || !tEl) return null;
     const f = bounds(fEl), t = bounds(tEl);
-    const sides = getSides(f, t);
-    return { fId, tId, fEl, tEl, f, t, sides };
-  }).filter(Boolean);
-
-  // Count per exit-group and entry-group for spread
-  const exitGroups  = {}; // key: fId+side
-  const entryGroups = {}; // key: tId+side
-  arrowInfo.forEach(a => {
-    const ek = a.fId + a.sides.mode + (a.sides.fx==='r'?'R':a.sides.fx==='l'?'L':'B');
-    const ak = a.tId + a.sides.mode + (a.sides.tx==='l'?'L':a.sides.tx==='r'?'R':'T');
+    const sides = getSides(fId, tId, f, t);
+    const ek = `${fId}-${sides.exitX}-${sides.exitY}`;
+    const ak = `${tId}-${sides.entX}-${sides.entY}`;
     if (!exitGroups[ek])  exitGroups[ek]  = [];
     if (!entryGroups[ak]) entryGroups[ak] = [];
-    exitGroups[ek].push(a);
-    entryGroups[ak].push(a);
-    a.ek = ek; a.ak = ak;
+    return { fId, tId, f, t, sides, ek, ak };
+  }).filter(Boolean);
+
+  arrowInfo.forEach(a => {
+    exitGroups[a.ek].push(a);
+    entryGroups[a.ak].push(a);
   });
 
-  // Draw each arrow
   arrowInfo.forEach(a => {
     const {fId, tId, f, t, sides} = a;
-
-    // Compute spread offset within card edge
     const exitList  = exitGroups[a.ek];
     const entryList = entryGroups[a.ak];
     const ei = exitList.indexOf(a);
     const ai = entryList.indexOf(a);
 
-    function spreadVal(list, idx, size, margin) {
-      if (list.length === 1) return 0;
-      return (idx / (list.length - 1) - 0.5) * size * margin;
+    function spread(n, i, size, margin) {
+      if (n === 1) return 0;
+      return (i / (n-1) - 0.5) * size * margin;
     }
 
-    let x1, y1, x2, y2, d1x, d1y, d2x, d2y;
+    let x1, y1, x2, y2, c1x, c1y, c2x, c2y;
 
     if (sides.mode === 'v') {
-      // Exit bottom, enter top — spread horizontally
-      const sp1 = spreadVal(exitList,  ei, f.w, 0.5);
-      const sp2 = spreadVal(entryList, ai, t.w, 0.5);
+      const sp1 = spread(exitList.length,  ei, f.w, 0.55);
+      const sp2 = spread(entryList.length, ai, t.w, 0.55);
       x1 = f.cx + sp1; y1 = f.b;
       x2 = t.cx + sp2; y2 = t.t;
-      const gap = Math.max((y2 - y1) * 0.4, 18);
-      d1x = x1; d1y = y1 + gap;
-      d2x = x2; d2y = y2 - gap;
+      const gap = Math.max((y2 - y1) * 0.42, 18);
+      c1x = x1; c1y = y1 + gap;
+      c2x = x2; c2y = y2 - gap;
     } else {
-      // Exit right or left, enter opposite — spread vertically
-      const sp1 = spreadVal(exitList,  ei, f.h, 0.5);
-      const sp2 = spreadVal(entryList, ai, t.h, 0.5);
-      x1 = sides.fx === 'r' ? f.r : f.l;
+      const sp1 = spread(exitList.length,  ei, f.h, 0.5);
+      const sp2 = spread(entryList.length, ai, t.h, 0.5);
+      x1 = sides.exitX === 'r' ? f.r : f.l;
       y1 = f.cy + sp1;
-      x2 = sides.tx === 'l' ? t.l : t.r;
+      x2 = sides.entX === 'l' ? t.l : t.r;
       y2 = t.cy + sp2;
-      const gap = Math.max(Math.abs(x2 - x1) * 0.4, 18);
-      const dir = sides.fx === 'r' ? 1 : -1;
-      d1x = x1 + gap * dir; d1y = y1;
-      d2x = x2 - gap * dir; d2y = y2;
+      const gap = Math.max(Math.abs(x2 - x1) * 0.42, 18);
+      const dir = sides.exitX === 'r' ? 1 : -1;
+      c1x = x1 + gap * dir; c1y = y1;
+      c2x = x2 - gap * dir; c2y = y2;
     }
 
     const approved = states[fId] === 'approved';
     const stroke = approved ? colApproved : colPending;
-
     const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-    path.setAttribute('d',
-      `M${x1.toFixed(1)},${y1.toFixed(1)} C${d1x.toFixed(1)},${d1y.toFixed(1)} ${d2x.toFixed(1)},${d2y.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`
-    );
+    path.setAttribute('d', `M${x1.toFixed(1)},${y1.toFixed(1)} C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`);
     path.setAttribute('stroke', stroke);
     path.setAttribute('stroke-width', '1.5');
     path.setAttribute('fill', 'none');
