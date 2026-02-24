@@ -160,12 +160,11 @@ header p { font-family:'Space Mono',monospace; font-size:.7rem; letter-spacing:3
 .optativa {}
 
 /* ── CICLO ───────────────────────────────────────────────────────────── */
-.ciclo-wrapper { border:1px solid var(--border); border-radius:14px; overflow:hidden; background:var(--surface); margin-top:10px; transition:background .3s,border-color .3s; }
+.ciclo-wrapper { border:1px solid var(--border); border-radius:14px; overflow:visible; background:var(--surface); margin-top:10px; transition:background .3s,border-color .3s; }
 .ciclo-header { padding:14px 20px; border-bottom:1px solid var(--border); font-family:'Space Mono',monospace; font-size:.58rem; letter-spacing:3px; text-transform:uppercase; color:var(--accent); transition:color .3s,border-color .3s; }
 .ciclo-body { padding:20px; position:relative; }
 #arrows-svg { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; }
-.ciclo-grid { position:relative; z-index:1; display:grid; grid-template-columns:repeat(5,1fr); grid-auto-rows:auto; gap:80px 12px; }
-#card-757 { margin-top:-48px; }
+.ciclo-grid { position:relative; z-index:1; display:grid; grid-template-columns:repeat(5,1fr); grid-auto-rows:auto; gap:80px 12px; padding-bottom:20px; }
 
 /* Optativas — floating cards below everything */
 .optativas-float {
@@ -479,7 +478,7 @@ const subjects = {
   755: { name:'T.Act. Seguros Patrimoniales (A2)', tramo:3, col:3, row:2, prereqsApproved:[601,751,752] },
 
   754: { name:'T.Act. Seguros Personales (A1)',    tramo:3, col:1, row:3, prereqsApproved:[753] },
-  757: { name:'T. Equilibrio Actuarial (A3)',       tramo:3, col:4, row:4, prereqsApproved:[754,755] },
+  757: { name:'T. Equilibrio Actuarial (A3)',       tramo:3, col:4, row:3, prereqsApproved:[754,755] },
   756: { name:'T.Act. Fond. y Plan Jub. (A4)',     tramo:3, col:3, row:3, prereqsApproved:[754] },
 
   717: { name:'Modelos y Proyecciones Actuariales',tramo:3, col:2, row:4, prereqsApproved:[757,758,746] },
@@ -657,19 +656,21 @@ function drawArrows() {
   const colPending  = isLight ? 'rgba(100,110,140,.55)' : 'rgba(120,120,180,.75)';
   const colApproved = isLight ? 'rgba(20,140,70,.6)'    : 'rgba(46,204,113,.65)';
 
-  // ── Nicer arrowhead: slim open chevron style ──────────────────────────────
+  // ── Arrowhead: clean filled teardrop, auto-orient to path direction ─────────
   const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
   const mkMarker = (id, col) => {
     const m = document.createElementNS('http://www.w3.org/2000/svg','marker');
     m.setAttribute('id', id);
-    m.setAttribute('markerWidth','10'); m.setAttribute('markerHeight','10');
-    m.setAttribute('refX','8'); m.setAttribute('refY','5');
-    m.setAttribute('orient','auto');
-    // Slim filled triangle — more elegant than the default
+    m.setAttribute('markerWidth','8'); m.setAttribute('markerHeight','8');
+    m.setAttribute('refX','7'); m.setAttribute('refY','4');
+    m.setAttribute('orient','auto-start-reverse');
+    // Teardrop: wide at base, pointed tip — visually clear direction
     const p = document.createElementNS('http://www.w3.org/2000/svg','path');
-    p.setAttribute('d','M0,1 L8,5 L0,9 L2,5 Z');
+    p.setAttribute('d','M0,0.5 L7,4 L0,7.5 L1.5,4 Z');
     p.setAttribute('fill', col);
-    p.setAttribute('stroke','none');
+    p.setAttribute('stroke', col);
+    p.setAttribute('stroke-width','0.5');
+    p.setAttribute('stroke-linejoin','round');
     m.appendChild(p); return m;
   };
   defs.appendChild(mkMarker('ad', colPending));
