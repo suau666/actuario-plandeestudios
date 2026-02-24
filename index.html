@@ -484,38 +484,33 @@ const subjects = {
 };
 
 // Correlatividades — solo ciclo→ciclo, flujo top-down
+// Correlatividades exactas del plan — solo ciclo→ciclo
+// Cada par [A,B] significa: A es prereq de B (flecha A→B)
 const arrowDefs = [
-  // r0→r1: verticales directas
-  [602,751],  // c0→c0
-  [601,279],  // c1→c1
-  [544,752],  // c2→c2
-  // r0→r1 cruzadas
-  [544,602],  // c2→c0 (544 es prereq de 602)
-  [544,751],  // c2→c0
-  [602,548],  // c0→c4
-  [601,548],  // c1→c4 (via 279, pero 279 también prereq)
-  // r1→r2
-  [751,753],  // c0→c0
-  [752,753],  // c2→c0
-  [601,753],  // c1r0→c0r2
-  [751,755],  // c0→c2
-  [752,755],  // c2→c2
-  [601,755],  // c1r0→c2r2
-  [601,758],  // c1r0→c4r2
-  [751,758],  // c0→c4
-  // r2→r3
-  [753,754],  // c0→c1
-  // r3→r4
-  [754,756],  // c1→c1
-  [754,757],  // c1→c2
-  [755,757],  // c2→c2
-  // r4→r5
-  [754,728],  // c1→c2
-  [755,728],  // c2→c2
-  [756,728],  // c1→c2
-  [757,717],  // c2→c3
-  [758,717],  // c4→c3
-  [746,717],  // c3→c3
+  // 751 Estadística Actuarial ← 544, 602
+  [544,751], [602,751],
+  // 279 Adm. Financiera ← 601
+  [601,279],
+  // 752 Análisis Numérico ← 544
+  [544,752],
+  // 548 Dinero y Bancos ← 279, 602
+  [279,548], [602,548],
+  // 753 Biometría ← 601, 751, 752
+  [601,753], [751,753], [752,753],
+  // 755 T.Act.Patr. ← 601, 751, 752
+  [601,755], [751,755], [752,755],
+  // 758 Bases Inv. ← 601, 751
+  [601,758], [751,758],
+  // 754 T.Act.Pers. ← 753
+  [753,754],
+  // 756 Fond.Jub. ← 754
+  [754,756],
+  // 757 Equilibrio ← 754, 755
+  [754,757], [755,757],
+  // 728 Práctica ← 754, 755, 756
+  [754,728], [755,728], [756,728],
+  // 717 Modelos ← 757, 758, 746
+  [757,717], [758,717], [746,717],
 ];
 
 const states = {};
@@ -652,32 +647,50 @@ function drawArrows() {
   const pRect = parent.getBoundingClientRect();
 
   const isLight = ['theme-white','theme-aqua','theme-cream'].some(cl => document.body.classList.contains(cl));
-  const pendingColor  = isLight ? 'rgba(80,80,130,.55)'  : 'rgba(80,80,150,.85)';
-  const approvedColor = isLight ? 'rgba(20,140,70,.55)'  : 'rgba(46,204,113,.55)';
+  const colPending  = isLight ? 'rgba(90,90,140,.5)'   : 'rgba(100,100,160,.8)';
+  const colApproved = isLight ? 'rgba(20,140,70,.5)'   : 'rgba(46,204,113,.5)';
 
+  // Markers
   const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
-  const mkMarker = (mid, color) => {
+  ['ad','ao'].forEach((id,i) => {
+    const col = i===0 ? colPending : colApproved;
     const m = document.createElementNS('http://www.w3.org/2000/svg','marker');
-    m.setAttribute('id', mid);
-    m.setAttribute('markerWidth','6'); m.setAttribute('markerHeight','6');
-    m.setAttribute('refX','5'); m.setAttribute('refY','3');
+    m.setAttribute('id', id);
+    m.setAttribute('markerWidth','7'); m.setAttribute('markerHeight','7');
+    m.setAttribute('refX','6'); m.setAttribute('refY','3.5');
     m.setAttribute('orient','auto');
     const p = document.createElementNS('http://www.w3.org/2000/svg','path');
-    p.setAttribute('d','M0,0 L0,6 L6,3 z');
-    p.setAttribute('fill', color);
-    m.appendChild(p); return m;
-  };
-  defs.appendChild(mkMarker('ad', pendingColor));
-  defs.appendChild(mkMarker('ao', approvedColor));
+    p.setAttribute('d','M0,0.5 L0,6.5 L6,3.5 z');
+    p.setAttribute('fill', col);
+    m.appendChild(p); defs.appendChild(m);
+  });
   svg.appendChild(defs);
 
-  // Count exits per source for horizontal spread
-  const exitCount = {}, exitIdx = {};
-  arrowDefs.forEach(([f]) => exitCount[f] = (exitCount[f]||0)+1);
-  arrowDefs.forEach(([f]) => exitIdx[f]   = 0);
-  const entryCount = {}, entryIdx = {};
-  arrowDefs.forEach(([,t]) => entryCount[t] = (entryCount[t]||0)+1);
-  arrowDefs.forEach(([,t]) => entryIdx[t]   = 0);
+  // Pre-compute spread positions for each card's exits and entries
+  // exitSlots[cardId] = array of x offsets along bottom edge
+  // entrySlots[cardId] = array of x offsets along top edge
+  const exits = {}, entries = {};
+  arrowDefs.forEach(([f,t]) => {
+    if (!exits[f])   exits[f]   = [];
+    if (!entries[t]) entries[t] = [];
+    exits[f].push(t);
+    entries[t].push(f);
+  });
+
+  // For each arrow, compute exit x on source bottom, entry x on target top
+  // spread evenly within the card width (20%-80% range to stay inside border)
+  function spreadX(el, idx, total, pLeft) {
+    const r = el.getBoundingClientRect();
+    const w = r.width;
+    const margin = w * 0.15;
+    if (total === 1) return r.left - pLeft + w / 2;
+    return r.left - pLeft + margin + (idx / (total-1)) * (w - 2*margin);
+  }
+
+  // Track which index we're at for each card
+  const exitIdx = {}, entryIdx = {};
+  arrowDefs.forEach(([f]) => { if (exitIdx[f]  === undefined) exitIdx[f]  = 0; });
+  arrowDefs.forEach(([,t])=> { if (entryIdx[t] === undefined) entryIdx[t] = 0; });
 
   arrowDefs.forEach(([fId, tId]) => {
     const fEl = document.getElementById('card-'+fId);
@@ -688,54 +701,32 @@ function drawArrows() {
     const tr = tEl.getBoundingClientRect();
     const ox = pRect.left, oy = pRect.top;
 
-    const fL=fr.left-ox, fR=fr.right-ox, fT=fr.top-oy, fB=fr.bottom-oy, fW=fr.width, fH=fr.height;
-    const tL=tr.left-ox, tR=tr.right-ox, tT=tr.top-oy, tB=tr.bottom-oy, tW=tr.width, tH=tr.height;
+    const totalExits   = exits[fId]   ? exits[fId].length   : 1;
+    const totalEntries = entries[tId] ? entries[tId].length : 1;
 
-    // Spread exits across bottom edge of source
-    const eN = exitCount[fId]  || 1;
-    const eI = exitIdx[fId]    || 0;
-    exitIdx[fId] = eI + 1;
-    const eSpread = eN > 1 ? (eI / (eN-1) - 0.5) * fW * 0.55 : 0;
+    const x1 = spreadX(fEl, exitIdx[fId],   totalExits,   ox);
+    const x2 = spreadX(tEl, entryIdx[tId],  totalEntries, ox);
+    exitIdx[fId]++;
+    entryIdx[tId]++;
 
-    // Spread entries across top edge of target
-    const aN = entryCount[tId] || 1;
-    const aI = entryIdx[tId]   || 0;
-    entryIdx[tId] = aI + 1;
-    const aSpread = aN > 1 ? (aI / (aN-1) - 0.5) * tW * 0.55 : 0;
+    const y1 = fr.bottom - oy;
+    const y2 = tr.top    - oy;
 
-    const dy = (tT + tH/2) - (fT + fH/2);
-    const dx = (tL + tW/2) - (fL + fW/2);
-    const isMainlyDown = Math.abs(dy) >= Math.abs(dx) * 0.6;
+    // Bezier: exit straight down, enter straight from above
+    // Control points: drop 40% of vertical distance before curving
+    const gap = Math.max((y2 - y1) * 0.42, 16);
+    const approved = states[fId] === 'approved';
+    const stroke = approved ? colApproved : colPending;
 
-    let x1, y1, x2, y2, d;
-
-    if (isMainlyDown) {
-      // Exit bottom, enter top — elbow with rounded corner
-      x1 = fL + fW/2 + eSpread;  y1 = fB;
-      x2 = tL + tW/2 + aSpread;  y2 = tT;
-      const gap = Math.max((y2-y1)*0.4, 20);
-      // Straight down then gentle S-curve
-      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-      path.setAttribute('d', `M${x1},${y1} C${x1},${y1+gap} ${x2},${y2-gap} ${x2},${y2}`);
-      path.setAttribute('stroke', states[fId]==='approved' ? approvedColor : pendingColor);
-      path.setAttribute('stroke-width','1.5');
-      path.setAttribute('fill','none');
-      path.setAttribute('marker-end', states[fId]==='approved' ? 'url(#ao)' : 'url(#ad)');
-      svg.appendChild(path);
-    } else {
-      // Horizontal: exit right/left, elbow down then across
-      const goRight = dx > 0;
-      x1 = goRight ? fR : fL;  y1 = fT + fH/2 + eSpread;
-      x2 = goRight ? tL : tR;  y2 = tT + tH/2 + aSpread;
-      const gap = Math.max(Math.abs(x2-x1)*0.4, 20);
-      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-      path.setAttribute('d', `M${x1},${y1} C${x1+gap*(goRight?1:-1)},${y1} ${x2-gap*(goRight?1:-1)},${y2} ${x2},${y2}`);
-      path.setAttribute('stroke', states[fId]==='approved' ? approvedColor : pendingColor);
-      path.setAttribute('stroke-width','1.5');
-      path.setAttribute('fill','none');
-      path.setAttribute('marker-end', states[fId]==='approved' ? 'url(#ao)' : 'url(#ad)');
-      svg.appendChild(path);
-    }
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d',
+      `M${x1.toFixed(1)},${y1.toFixed(1)} C${x1.toFixed(1)},${(y1+gap).toFixed(1)} ${x2.toFixed(1)},${(y2-gap).toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`
+    );
+    path.setAttribute('stroke', stroke);
+    path.setAttribute('stroke-width', '1.5');
+    path.setAttribute('fill', 'none');
+    path.setAttribute('marker-end', approved ? 'url(#ao)' : 'url(#ad)');
+    svg.appendChild(path);
   });
 }
 
