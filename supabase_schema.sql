@@ -45,3 +45,10 @@ SELECT column_name, data_type, is_nullable
 FROM information_schema.columns
 WHERE table_name = 'user_progress'
 ORDER BY ordinal_position;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- IMPORTANTE: Ejecutar esto también para que el guardado automático funcione
+-- (el UPSERT necesita una constraint UNIQUE en user_id)
+-- ─────────────────────────────────────────────────────────────────────────────
+ALTER TABLE user_progress 
+  ADD CONSTRAINT user_progress_user_id_key UNIQUE (user_id);
