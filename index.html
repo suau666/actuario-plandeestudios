@@ -653,29 +653,33 @@ function drawArrows() {
   const pRect = parent.getBoundingClientRect();
 
   const isLight = ['theme-white','theme-aqua','theme-cream'].some(cl => document.body.classList.contains(cl));
-  const colPending  = isLight ? 'rgba(100,110,140,.55)' : 'rgba(120,120,180,.75)';
-  const colApproved = isLight ? 'rgba(20,140,70,.6)'    : 'rgba(46,204,113,.65)';
+  const colPending  = isLight ? 'rgba(100,110,140,.6)'  : 'rgba(130,130,190,.8)';
+  const colApproved = isLight ? 'rgba(20,140,70,.65)'   : 'rgba(46,204,113,.7)';
 
-  // ── Arrowhead: clean filled teardrop, auto-orient to path direction ─────────
+  // ── Markers: two per color (end = arrowhead, start = invisible dot for orient) ──
+  // The trick: path ends 8px BEFORE the card border, marker draws the tip.
+  // This guarantees orient="auto" always shows the correct angle.
   const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
-  const mkMarker = (id, col) => {
-    const m = document.createElementNS('http://www.w3.org/2000/svg','marker');
+  const ns = 'http://www.w3.org/2000/svg';
+
+  const mkArrow = (id, col) => {
+    const m = document.createElementNS(ns,'marker');
     m.setAttribute('id', id);
-    m.setAttribute('markerWidth','8'); m.setAttribute('markerHeight','8');
-    m.setAttribute('refX','7'); m.setAttribute('refY','4');
-    m.setAttribute('orient','auto-start-reverse');
-    // Teardrop: wide at base, pointed tip — visually clear direction
-    const p = document.createElementNS('http://www.w3.org/2000/svg','path');
-    p.setAttribute('d','M0,0.5 L7,4 L0,7.5 L1.5,4 Z');
+    m.setAttribute('markerWidth','9'); m.setAttribute('markerHeight','9');
+    m.setAttribute('refX','0'); m.setAttribute('refY','4.5');
+    m.setAttribute('orient','auto');
+    m.setAttribute('markerUnits','userSpaceOnUse');
+    // Elegant narrow triangle: base 9px wide, tip at x=8
+    const p = document.createElementNS(ns,'polygon');
+    p.setAttribute('points','0,0.5 8,4.5 0,8.5 2,4.5');
     p.setAttribute('fill', col);
-    p.setAttribute('stroke', col);
-    p.setAttribute('stroke-width','0.5');
-    p.setAttribute('stroke-linejoin','round');
     m.appendChild(p); return m;
   };
-  defs.appendChild(mkMarker('ad', colPending));
-  defs.appendChild(mkMarker('ao', colApproved));
+  defs.appendChild(mkArrow('ad', colPending));
+  defs.appendChild(mkArrow('ao', colApproved));
   svg.appendChild(defs);
+
+  const TIP = 9; // px to stop before card border so arrowhead tip lands exactly on it
 
   function bounds(el) {
     const r = el.getBoundingClientRect();
@@ -684,81 +688,119 @@ function drawArrows() {
              cx:r.left-ox+r.width/2, cy:r.top-oy+r.height/2, w:r.width, h:r.height };
   }
 
-  // Side overrides per arrow
-  const sideOverrides = {
-    '601-603': 'v',
-    '601-548': 'v',
-    '279-548': 'v',
-    '746-717': 'h-r',
-    '758-717': 'v',
-    '757-717': 'v',
-    '754-757': 'v',
+  // Per-arrow overrides — encode as [exitSide, exitBias, entrySide, entryBias, arcDir]
+  // exitSide/entrySide: 'b'ottom,'t'op,'l'eft,'r'ight
+  // bias: 'l','c','r' for top/bottom; 't','m','b' for left/right
+  // arcDir: null | 'up' | 'down'
+  const OV = {
+    // [exitSide, exitBias, entrySide, entryBias, arcDir]
+    '754-757': ['t','r',  't','l',  'up'],   // top-right → arc up → top-left
+    '601-603': ['b','r',  't','l',  null],
+    '601-548': ['b','r',  't','r',  null],
+    '279-548': ['b','c',  't','c',  null],
+    '746-717': ['r','m',  'l','m',  null],
+    '758-717': ['b','c',  't','l',  null],
+    '757-717': ['b','c',  't','r',  null],
+    '756-728': ['b','c',  't','c',  null],
+    '755-728': ['b','r',  't','r',  null],
   };
 
-  function getSides(fId, tId, f, t) {
-    const key = fId+'-'+tId;
-    if (sideOverrides[key] === 'v')   return { ex:'cx', ey:'b', tx:'cx', ty:'t', mode:'v' };
-    if (sideOverrides[key] === 'h-r') return { ex:'r',  ey:'cy',tx:'l', ty:'cy',mode:'h' };
-    if (sideOverrides[key] === 'h-l') return { ex:'l',  ey:'cy',tx:'r', ty:'cy',mode:'h' };
-    const dy = t.cy - f.cy, dx = t.cx - f.cx;
-    if (dy > 30) return { ex:'cx', ey:'b', tx:'cx', ty:'t', mode:'v' };
-    if (dx > 0)  return { ex:'r', ey:'cy', tx:'l', ty:'cy', mode:'h' };
-    return             { ex:'l', ey:'cy', tx:'r', ty:'cy', mode:'h' };
+  function getPoint(rect, side, bias) {
+    // Returns [x, y] on the edge, offset by TIP inward for path endpoint
+    // (so the marker tip lands ON the border)
+    const {l,r,t,b,cx,cy,w,h} = rect;
+    const bx = bias==='l' ? l+w*0.25 : bias==='r' ? r-w*0.25 : cx;
+    const by = bias==='t' ? t+h*0.25 : bias==='b' ? b-h*0.25 : cy;
+    if (side==='b') return [bx,        b       ]; // exit: no inset; entry: stop TIP before
+    if (side==='t') return [bx,        t       ];
+    if (side==='r') return [r,         by      ];
+    if (side==='l') return [l,         by      ];
   }
 
-  // Group arrows by exit-edge and entry-edge for spread
+  // For entry points, stop TIP px before the border
+  function getEntryPoint(rect, side, bias) {
+    const [x,y] = getPoint(rect, side, bias);
+    if (side==='t') return [x, y+TIP];
+    if (side==='b') return [x, y-TIP];
+    if (side==='l') return [x+TIP, y];
+    if (side==='r') return [x-TIP, y];
+  }
+
+  // Group for spread (only non-override arrows)
   const exitG = {}, entryG = {};
   const info = arrowDefs.map(([fId, tId]) => {
     const fEl = document.getElementById('card-'+fId);
     const tEl = document.getElementById('card-'+tId);
     if (!fEl || !tEl) return null;
     const f = bounds(fEl), t = bounds(tEl);
-    const s = getSides(fId, tId, f, t);
-    const ek = `${fId}|${s.ex}|${s.ey}`, ak = `${tId}|${s.tx}|${s.ty}`;
+    const ov = OV[fId+'-'+tId] || null;
+
+    let exitSide, entryBias, entrySide, exitBias, arcDir=null;
+    if (ov) {
+      [exitSide, exitBias, entrySide, entryBias, arcDir] = ov;
+    } else {
+      const dy = t.cy-f.cy, dx = t.cx-f.cx;
+      if (dy > 30) { exitSide='b'; exitBias='c'; entrySide='t'; entryBias='c'; }
+      else if (dx>0){ exitSide='r'; exitBias='m'; entrySide='l'; entryBias='m'; }
+      else          { exitSide='l'; exitBias='m'; entrySide='r'; entryBias='m'; }
+    }
+
+    const ek = ov ? `${fId}-OV` : `${fId}|${exitSide}`;
+    const ak = ov ? `${tId}-OV-${entrySide}${entryBias}` : `${tId}|${entrySide}`;
     if (!exitG[ek])  exitG[ek]  = [];
     if (!entryG[ak]) entryG[ak] = [];
-    return { fId, tId, f, t, s, ek, ak };
+    return { fId, tId, f, t, exitSide, exitBias, entrySide, entryBias, arcDir, ek, ak, isOv:!!ov };
   }).filter(Boolean);
 
   info.forEach(a => { exitG[a.ek].push(a); entryG[a.ak].push(a); });
 
   info.forEach(a => {
-    const {fId, tId, f, t, s} = a;
-    const eList = exitG[a.ek],  ei = eList.indexOf(a);
+    const {fId, tId, f, t} = a;
+    const eList = exitG[a.ek], ei = eList.indexOf(a);
     const aList = entryG[a.ak], ai = aList.indexOf(a);
 
-    const sp = (n, i, size) => n > 1 ? (i/(n-1) - 0.5) * size * 0.52 : 0;
+    let [x1,y1] = getPoint(f, a.exitSide, a.exitBias);
+    let [x2,y2] = getEntryPoint(t, a.entrySide, a.entryBias);
 
-    let x1, y1, x2, y2, c1x, c1y, c2x, c2y;
-
-    if (s.mode === 'v') {
-      x1 = f.cx + sp(eList.length, ei, f.w);  y1 = f.b;
-      x2 = t.cx + sp(aList.length, ai, t.w);  y2 = t.t;
-      // Gentle cubic: control points pulled only 28% of the gap — less S-curve
-      const gap = Math.max((y2 - y1) * 0.28, 14);
-      c1x = x1; c1y = y1 + gap;
-      c2x = x2; c2y = y2 - gap;
-    } else {
-      x1 = s.ex === 'r' ? f.r : f.l;
-      y1 = f.cy + sp(eList.length, ei, f.h);
-      x2 = s.tx === 'l' ? t.l : t.r;
-      y2 = t.cy + sp(aList.length, ai, t.h);
-      const gap = Math.max(Math.abs(x2 - x1) * 0.28, 14);
-      const dir = s.ex === 'r' ? 1 : -1;
-      c1x = x1 + gap * dir; c1y = y1;
-      c2x = x2 - gap * dir; c2y = y2;
+    // Spread non-override same-edge arrows
+    if (!a.isOv) {
+      const n = eList.length, spE = n>1?(ei/(n-1)-0.5)*0.5:0;
+      const m = aList.length, spA = m>1?(ai/(m-1)-0.5)*0.5:0;
+      if (a.exitSide==='b'||a.exitSide==='t')  x1 += f.w * spE;
+      else                                       y1 += f.h * spE;
+      if (a.entrySide==='t'||a.entrySide==='b') x2 += t.w * spA;
+      else                                       y2 += t.h * spA;
     }
 
-    const approved = states[fId] === 'approved';
+    // Build cubic bezier control points
+    let c1x, c1y, c2x, c2y;
+
+    if (a.arcDir === 'up') {
+      // 754→757: arc UP over 756 — exit top-right, curve up, enter top-left
+      const peakY = Math.min(f.t, t.t) - 50; // how high to arc
+      c1x = x1 + 60; c1y = peakY;
+      c2x = x2 - 60; c2y = peakY;
+    } else {
+      const dx = x2-x1, dy = y2-y1;
+      const dist = Math.sqrt(dx*dx+dy*dy);
+      const tension = Math.min(dist*0.35, 80);
+
+      // Control points extend in exit/entry direction
+      const exitDir  = {b:[0,1],t:[0,-1],r:[1,0],l:[-1,0]}[a.exitSide];
+      const entryDir = {t:[0,-1],b:[0,1],l:[-1,0],r:[1,0]}[a.entrySide]; // reversed: going INTO card
+      c1x = x1 + exitDir[0]*tension;  c1y = y1 + exitDir[1]*tension;
+      c2x = x2 + entryDir[0]*tension; c2y = y2 + entryDir[1]*tension;
+    }
+
+    const approved = states[fId]==='approved';
     const stroke = approved ? colApproved : colPending;
-    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-    path.setAttribute('d',
-      `M${x1.toFixed(1)},${y1.toFixed(1)} C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`
-    );
+    const path = document.createElementNS(ns,'path');
+    const d = `M${x1.toFixed(1)},${y1.toFixed(1)} C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`;
+    path.setAttribute('d', d);
     path.setAttribute('stroke', stroke);
-    path.setAttribute('stroke-width', '1.4');
-    path.setAttribute('fill', 'none');
-    path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('stroke-width','1.5');
+    path.setAttribute('fill','none');
+    path.setAttribute('stroke-linecap','round');
     path.setAttribute('marker-end', approved ? 'url(#ao)' : 'url(#ad)');
     svg.appendChild(path);
   });
