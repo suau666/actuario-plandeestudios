@@ -102,11 +102,11 @@ header p { font-family:'Space Mono',monospace; font-size:.7rem; letter-spacing:3
 /* ── SUBJECT CARD ────────────────────────────────────────────────────── */
 .subject {
   background:var(--pending-bg); border:1.5px solid var(--pending-border);
-  border-radius:10px; padding:10px 12px 14px 12px;
+  border-radius:10px; padding:10px 12px 16px 12px;
   cursor:default; transition:all .18s ease;
   position:relative; user-select:none;
   display:flex; flex-direction:column; gap:4px;
-  overflow:visible; min-height:52px; box-sizing:border-box;
+  overflow:visible; min-height:56px; box-sizing:border-box;
 }
 .subject.clickable { cursor:pointer; }
 .subject.clickable:hover { transform:translateY(-2px); filter:brightness(1.12); }
@@ -131,10 +131,10 @@ header p { font-family:'Space Mono',monospace; font-size:.7rem; letter-spacing:3
 /* Name — below the ID, never shrinks, card grows naturally */
 .subject-name {
   font-size:.75rem; font-weight:600;
-  color:var(--pending-text); line-height:1.4;
+  color:var(--pending-text); line-height:1.5;
   transition:color .18s; display:block;
-  padding-right:14px; padding-bottom:4px;
-  overflow:visible; word-break:keep-all;
+  padding-right:14px; padding-bottom:6px;
+  overflow:visible;
 }
 
 /* Status pip — top right */
@@ -489,33 +489,33 @@ const subjects = {
   opt2:{ name:'', tramo:3, prereqsApproved:[], optional:true, editable:true, label:'Optativa 2' },
 };
 
-// Correlatividades — solo ciclo→ciclo, flujo top-down
-// Correlatividades — ORDER sets spread position (first=leftmost)
-// 601 exits L→R towards: 753, 758, 548, 603
+// arrowDefs — ORDER controls spread position (first = leftmost exit / leftmost entry)
 const arrowDefs = [
   // 752 ← 544
   [544,752],
   // 751 ← 544, 602
   [544,751], [602,751],
-  // 601 exits in order L→R: 753(1st), 758(2nd), 548(3rd), 603(4th)
-  [601,753], [601,758], [601,548], [601,603],
-  // 548 also ← 279 (enters top-right, so after 601)
+  // 601 exits L→R in this order: 753, 758, 755, 548, 603
+  [601,753], [601,758], [601,755], [601,548], [601,603],
+  // 548 ← 279 (after 601)
   [279,548],
-  // 753 Biometría ← 752(left), 751(mid), 601 already listed above
+  // 753 entries top L→R: 752(1st), 751(2nd), 601(3rd)
   [752,753], [751,753],
-  // 755 T.Act.Patr. ← 752(left), 751(mid), 601(right)
-  [752,755], [751,755], [601,755],
-  // 758 ← 751 (601→758 already listed above)
+  // 755 entries: 752, 751, 601 already above
+  [752,755], [751,755],
+  // 758 ← 751
   [751,758],
   // 754 ← 753
   [753,754],
   // 756 ← 754
   [754,756],
-  // 757 ← 754, 755 — 754→757 enters top (754 is above 757)
-  [754,757], [755,757],
-  // 728 ← 754, 755, 756
-  [754,728], [755,728], [756,728],
-  // 717 Modelos ← 758(top-left), 757(top-right), 746(horizontal right→left)
+  // 755 exits L→R: 728(left target), 757(right target)
+  [755,728], [755,757],
+  // 754 exits: 757, 728
+  [754,757], [754,728],
+  // 756 → 728
+  [756,728],
+  // 717 ← 758(left), 757(right), 746(horiz)
   [758,717], [757,717], [746,717],
 ];
 
@@ -651,57 +651,64 @@ function drawArrows() {
   svg.innerHTML = '';
   const parent = svg.parentElement;
   const pRect = parent.getBoundingClientRect();
+  const ns = 'http://www.w3.org/2000/svg';
 
   const isLight = ['theme-white','theme-aqua','theme-cream'].some(cl => document.body.classList.contains(cl));
-  const cPend = isLight ? 'rgba(100,105,140,.6)'  : 'rgba(130,130,185,.8)';
-  const cAppr = isLight ? 'rgba(18,135,65,.65)'   : 'rgba(46,204,113,.7)';
+  const cPend = isLight ? 'rgba(100,105,140,.62)' : 'rgba(130,130,185,.82)';
+  const cAppr = isLight ? 'rgba(18,135,65,.68)'   : 'rgba(46,204,113,.72)';
 
-  const ns = 'http://www.w3.org/2000/svg';
+  // ── Markers ──────────────────────────────────────────────────────────────
   const defs = document.createElementNS(ns,'defs');
-
-  // Marker: tip lands exactly at path endpoint, orient follows path tangent
-  const mkArrow = (id, col) => {
+  // Two separate marker defs per color so each path picks its own.
+  // Use a POLYLINE so orient=auto rotates the whole shape with the path tangent.
+  const mkM = (id, col) => {
     const m = document.createElementNS(ns,'marker');
     m.setAttribute('id', id);
-    m.setAttribute('markerWidth','7'); m.setAttribute('markerHeight','7');
-    m.setAttribute('refX','6'); m.setAttribute('refY','3.5');
+    m.setAttribute('markerWidth','8');  m.setAttribute('markerHeight','8');
+    m.setAttribute('refX','4');         m.setAttribute('refY','4');
     m.setAttribute('orient','auto');
-    const p = document.createElementNS(ns,'polygon');
-    p.setAttribute('points','0,0 6,3.5 0,7 1.8,3.5');
-    p.setAttribute('fill', col);
-    m.appendChild(p); return m;
+    m.setAttribute('markerUnits','strokeWidth');
+    const pg = document.createElementNS(ns,'polygon');
+    // Symmetric filled arrow, tip at x=8, base at x=0
+    pg.setAttribute('points','0,1 7,4 0,7 1.5,4');
+    pg.setAttribute('fill', col);
+    m.appendChild(pg);
+    return m;
   };
-  defs.appendChild(mkArrow('ad', cPend));
-  defs.appendChild(mkArrow('ao', cAppr));
+  defs.appendChild(mkM('ad', cPend));
+  defs.appendChild(mkM('ao', cAppr));
   svg.appendChild(defs);
 
   function R(el) {
-    const r = el.getBoundingClientRect();
-    const ox = pRect.left, oy = pRect.top;
-    return {
-      l: r.left-ox,   r: r.right-ox,
-      t: r.top-oy,    b: r.bottom-oy,
-      cx: r.left-ox + r.width/2,
-      cy: r.top-oy  + r.height/2,
-      w: r.width,     h: r.height
-    };
+    const r = el.getBoundingClientRect(), ox=pRect.left, oy=pRect.top;
+    return { l:r.left-ox, r:r.right-ox, t:r.top-oy, b:r.bottom-oy,
+             cx:r.left-ox+r.width/2, cy:r.top-oy+r.height/2, w:r.width, h:r.height };
   }
 
-  // Each arrow: [fromId, toId]
-  // exitSlots[fromId] and entrySlots[toId] accumulate indices for spread
-  // Special overrides define exact exit/entry x,y rather than computed spread
+  // Build exit/entry index maps for spread (preserve arrowDefs order)
+  const exitSeq={}, entSeq={};
+  arrowDefs.forEach(([f,t]) => {
+    const ek=f+'-b', ak=t+'-t';
+    exitSeq[ek] = (exitSeq[ek]||[]);
+    entSeq[ak]  = (entSeq[ak]||[]);
+    exitSeq[ek].push(t);
+    entSeq[ak].push(f);
+  });
 
-  // Pre-pass: count exits per source and entries per target (for spread)
-  const exitIdx={}, exitCnt={}, entIdx={}, entCnt={};
-  arrowDefs.forEach(([f,t]) => { exitCnt[f]=(exitCnt[f]||0)+1; entCnt[t]=(entCnt[t]||0)+1; });
-  arrowDefs.forEach(([f,t]) => { exitIdx[f]=exitIdx[f]??0; entIdx[t]=entIdx[t]??0; });
-
-  // Spread helper: distributes n points evenly across [margin, width-margin]
-  function spreadPt(center, width, idx, total, marginFrac=0.25) {
+  // Spread: distribute n points across card edge, 20%–80% range
+  function spreadX(center, width, idx, total) {
     if (total===1) return center;
-    const half = width*(0.5-marginFrac);
-    return center + (idx/(total-1) - 0.5)*2*half;
+    const range = width * 0.58;
+    return center + (idx/(total-1) - 0.5) * range;
   }
+  function spreadY(center, height, idx, total) {
+    if (total===1) return center;
+    const range = height * 0.5;
+    return center + (idx/(total-1) - 0.5) * range;
+  }
+
+  // Track which index each (card, edge) is at
+  const exitI={}, entI={};
 
   arrowDefs.forEach(([fId, tId]) => {
     const fEl = document.getElementById('card-'+fId);
@@ -709,62 +716,58 @@ function drawArrows() {
     if (!fEl || !tEl) return;
 
     const f = R(fEl), t = R(tEl);
-    const ei = exitIdx[fId]; exitIdx[fId]++;
-    const ai = entIdx[tId];  entIdx[tId]++;
-    const eN = exitCnt[fId], aN = entCnt[tId];
-
-    const key = fId+'-'+tId;
     const approved = states[fId]==='approved';
     const stroke = approved ? cAppr : cPend;
+    const key = fId+'-'+tId;
 
-    let x1,y1, x2,y2, c1x,c1y, c2x,c2y, customD;
+    let x1,y1,x2,y2,c1x,c1y,c2x,c2y;
 
-    // ── Special case: 754→757 arcs UP over 756 ───────────────────────────────
-    if (key === '754-757') {
-      x1 = f.r - 6;  y1 = f.t + f.h*0.3;   // exits right side, upper third of 754
-      x2 = t.l + 6;  y2 = t.t + t.h*0.3;   // enters left side, upper third of 757
-      const peakY = Math.min(f.t, t.t) - 45;
-      c1x = f.r + 50; c1y = peakY;
-      c2x = t.l - 50; c2y = peakY;
+    // ── Special: 754→757 arcs UP (over 756) ─────────────────────────────────
+    if (key==='754-757') {
+      // Exit right edge of 754, arc above both cards, enter left edge of 757
+      x1=f.r;         y1=f.t + f.h*0.35;
+      x2=t.l;         y2=t.t + t.h*0.35;
+      const peakY = Math.min(f.t,t.t) - 40;
+      c1x=f.r+55;     c1y=peakY;
+      c2x=t.l-55;     c2y=peakY;
     }
-    // ── 746→717 horizontal ───────────────────────────────────────────────────
-    else if (key === '746-717') {
-      x1 = f.r;       y1 = f.cy;
-      x2 = t.l;       y2 = t.cy;
-      const g = Math.max((x2-x1)*0.35, 20);
-      c1x = x1+g; c1y = y1; c2x = x2-g; c2y = y2;
+    // ── Special: 746→717 pure horizontal ────────────────────────────────────
+    else if (key==='746-717') {
+      x1=f.r; y1=f.cy;
+      x2=t.l; y2=t.cy;
+      const g=Math.max((x2-x1)*0.3,20);
+      c1x=x1+g; c1y=y1; c2x=x2-g; c2y=y2;
     }
-    // ── Default: vertical (exit bottom → entry top) ───────────────────────────
+    // ── All other arrows: exit bottom, enter top with spread ─────────────────
     else {
-      // Determine if arrow is mainly horizontal (same row)
-      const dy = t.cy - f.cy, dx = t.cx - f.cx;
-      const isHoriz = Math.abs(dy) < 40 && Math.abs(dx) > 60;
+      const ek = fId+'-b', ak = tId+'-t';
+      const eArr = exitSeq[ek]||[], aArr = entSeq[ak]||[];
+      const ei = eArr.indexOf(tId), ai = aArr.indexOf(fId);
+      const eN = eArr.length, aN = aArr.length;
 
-      if (isHoriz) {
-        // Same-row horizontal
-        const goRight = dx > 0;
-        x1 = goRight ? f.r : f.l;
-        y1 = spreadPt(f.cy, f.h, ei, eN, 0.2);
-        x2 = goRight ? t.l : t.r;
-        y2 = spreadPt(t.cy, t.h, ai, aN, 0.2);
-        const g = Math.max(Math.abs(x2-x1)*0.35, 20);
-        const dir = goRight ? 1 : -1;
-        c1x = x1+g*dir; c1y = y1; c2x = x2-g*dir; c2y = y2;
-      } else {
-        // Vertical with spread
-        x1 = spreadPt(f.cx, f.w, ei, eN);
-        y1 = f.b;
-        x2 = spreadPt(t.cx, t.w, ai, aN);
-        y2 = t.t;
-        const g = Math.max((y2-y1)*0.28, 16);
-        c1x = x1; c1y = y1+g; c2x = x2; c2y = y2-g;
+      x1 = spreadX(f.cx, f.w, ei, eN);
+      y1 = f.b;
+      x2 = spreadX(t.cx, t.w, ai, aN);
+      y2 = t.t;
+
+      // Tension: small % of vertical distance → nearly straight lines,
+      // just enough curve to show direction clearly
+      const dy = y2-y1, dx = x2-x1;
+      const tension = Math.max(Math.abs(dy)*0.18, 14);
+      // Control points go straight down/up — keeps lines nearly straight
+      c1x=x1; c1y=y1+tension;
+      c2x=x2; c2y=y2-tension;
+      // If there's significant horizontal offset add mild horizontal pull
+      if (Math.abs(dx) > 30) {
+        c1x = x1 + dx*0.12;
+        c2x = x2 - dx*0.12;
       }
     }
 
-    const d = customD || `M${x1.toFixed(1)},${y1.toFixed(1)} C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`;
-
     const path = document.createElementNS(ns,'path');
-    path.setAttribute('d', d);
+    path.setAttribute('d',
+      `M${x1.toFixed(1)},${y1.toFixed(1)} C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`
+    );
     path.setAttribute('stroke', stroke);
     path.setAttribute('stroke-width','1.5');
     path.setAttribute('fill','none');
