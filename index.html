@@ -454,29 +454,35 @@ const subjects = {
   //   r4:   —       756      757       —        —
   //   r5:   —        —       728      717       —
 
-  602: { name:'Análisis Estadístico II',           tramo:3, col:0, row:0, prereqsApproved:[540,542] },
-  601: { name:'Mat. Financiera y Actuarial',       tramo:3, col:2, row:0, prereqsApproved:[540,542] },
-  544: { name:'Matemática Aplicada II',            tramo:3, col:1, row:0, prereqsApproved:[542] },
-  291: { name:'Microeconomía p/Economistas',       tramo:3, col:3, row:0, prereqsApproved:[542] },
-  603: { name:'Dcho. Financiero, Seg. y S.S.',     tramo:3, col:4, row:0, prereqsApproved:[462] },
+  // ── Layout exacto del esquema ────────────────────────────────────────────────
+  // row 0: 544(c0) 602(c1) 601(c2) 746(c3) 291(c4)
+  // row 1: 752(c0) 751(c1) 279(c2) 603(c3) 548(c4)
+  // row 2:         753(c1) 758(c2) 755(c3)
+  // row 3:         754(c1)         757(c3) 756(c4)
+  // row 4:                 717(c2) 728(c3)
 
-  751: { name:'Estadística Actuarial',             tramo:3, col:0, row:1, prereqsApproved:[544,602] },
-  279: { name:'Administración Financiera',         tramo:3, col:1, row:1, prereqsApproved:[601] },
-  752: { name:'Análisis Numérico',                 tramo:3, col:2, row:1, prereqsApproved:[544] },
-  746: { name:'Computación Científica Actuarial',  tramo:3, col:3, row:1, prereqsApproved:[540,542] },
-  548: { name:'Dinero y Bancos',                   tramo:3, col:0, row:2, prereqsApproved:[279,602] },
+  544: { name:'Matemática Aplicada II',            tramo:3, col:0, row:0, prereqsApproved:[542] },
+  602: { name:'Análisis Estadístico II',           tramo:3, col:1, row:0, prereqsApproved:[540,542] },
+  601: { name:'Mat. Financiera y Actuarial',       tramo:3, col:2, row:0, prereqsApproved:[540,542] },
+  746: { name:'Computación Científica Actuarial',  tramo:3, col:3, row:0, prereqsApproved:[540,542] },
+  291: { name:'Microeconomía p/Economistas',       tramo:3, col:4, row:0, prereqsApproved:[542] },
+
+  752: { name:'Análisis Numérico',                 tramo:3, col:0, row:1, prereqsApproved:[544] },
+  751: { name:'Estadística Actuarial',             tramo:3, col:1, row:1, prereqsApproved:[544,602] },
+  279: { name:'Administración Financiera',         tramo:3, col:2, row:1, prereqsApproved:[601] },
+  603: { name:'Dcho. Financiero, Seg. y S.S.',     tramo:3, col:3, row:1, prereqsApproved:[462] },
+  548: { name:'Dinero y Bancos',                   tramo:3, col:4, row:1, prereqsApproved:[279,602] },
 
   753: { name:'Biometría Actuarial',               tramo:3, col:1, row:2, prereqsApproved:[601,751,752] },
-  755: { name:'T.Act. Seguros Patrimoniales (A2)', tramo:3, col:2, row:2, prereqsApproved:[601,751,752] },
-  758: { name:'Bases Act. Inversiones (A5)',        tramo:3, col:4, row:2, prereqsApproved:[601,751] },
+  758: { name:'Bases Act. Inversiones (A5)',        tramo:3, col:2, row:2, prereqsApproved:[601,751] },
+  755: { name:'T.Act. Seguros Patrimoniales (A2)', tramo:3, col:3, row:2, prereqsApproved:[601,751,752] },
 
   754: { name:'T.Act. Seguros Personales (A1)',    tramo:3, col:1, row:3, prereqsApproved:[753] },
+  757: { name:'T. Equilibrio Actuarial (A3)',       tramo:3, col:3, row:3, prereqsApproved:[754,755] },
+  756: { name:'T.Act. Fond. y Plan Jub. (A4)',     tramo:3, col:4, row:3, prereqsApproved:[754] },
 
-  756: { name:'T.Act. Fond. y Plan Jub. (A4)',     tramo:3, col:1, row:4, prereqsApproved:[754] },
-  757: { name:'T. Equilibrio Actuarial (A3)',       tramo:3, col:2, row:4, prereqsApproved:[754,755] },
-
-  728: { name:'Práctica Profesional del Actuario', tramo:3, col:2, row:5, prereqsApproved:[754,755,756] },
-  717: { name:'Modelos y Proyecciones Actuariales',tramo:3, col:3, row:5, prereqsApproved:[757,758,746] },
+  717: { name:'Modelos y Proyecciones Actuariales',tramo:3, col:2, row:4, prereqsApproved:[757,758,746] },
+  728: { name:'Práctica Profesional del Actuario', tramo:3, col:3, row:4, prereqsApproved:[754,755,756] },
 
   // Optativas — rendered separately, no col/row
   opt1:{ name:'', tramo:3, prereqsApproved:[], optional:true, editable:true, label:'Optativa 1' },
