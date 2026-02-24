@@ -464,7 +464,7 @@ const subjects = {
   544: { name:'Matemática Aplicada II',            tramo:3, col:0, row:0, prereqsApproved:[542] },
   602: { name:'Análisis Estadístico II',           tramo:3, col:1, row:0, prereqsApproved:[540,542] },
   601: { name:'Mat. Financiera y Actuarial',       tramo:3, col:2, row:0, prereqsApproved:[540,542] },
-  746: { name:'Computación Científica Actuarial',  tramo:3, col:3, row:0, prereqsApproved:[540,542] },
+  746: { name:'Computación Científica Actuarial',  tramo:3, col:2, row:4, prereqsApproved:[540,542] },
   291: { name:'Microeconomía p/Economistas',       tramo:3, col:4, row:0, prereqsApproved:[542] },
 
   752: { name:'Análisis Numérico',                 tramo:3, col:0, row:1, prereqsApproved:[544] },
@@ -481,8 +481,8 @@ const subjects = {
   757: { name:'T. Equilibrio Actuarial (A3)',       tramo:3, col:3, row:3, prereqsApproved:[754,755] },
   756: { name:'T.Act. Fond. y Plan Jub. (A4)',     tramo:3, col:4, row:3, prereqsApproved:[754] },
 
-  717: { name:'Modelos y Proyecciones Actuariales',tramo:3, col:2, row:4, prereqsApproved:[757,758,746] },
-  728: { name:'Práctica Profesional del Actuario', tramo:3, col:3, row:4, prereqsApproved:[754,755,756] },
+  717: { name:'Modelos y Proyecciones Actuariales',tramo:3, col:2, row:5, prereqsApproved:[757,758,746] },
+  728: { name:'Práctica Profesional del Actuario', tramo:3, col:3, row:5, prereqsApproved:[754,755,756] },
 
   // Optativas — rendered separately, no col/row
   opt1:{ name:'', tramo:3, prereqsApproved:[], optional:true, editable:true, label:'Optativa 1' },
@@ -653,8 +653,8 @@ function drawArrows() {
   const pRect = parent.getBoundingClientRect();
 
   const isLight = ['theme-white','theme-aqua','theme-cream'].some(cl => document.body.classList.contains(cl));
-  const colPending  = isLight ? 'rgba(90,90,140,.5)'   : 'rgba(100,100,160,.8)';
-  const colApproved = isLight ? 'rgba(20,140,70,.5)'   : 'rgba(46,204,113,.5)';
+  const colPending  = isLight ? 'rgba(90,90,140,.5)'  : 'rgba(100,100,160,.8)';
+  const colApproved = isLight ? 'rgba(20,140,70,.5)'  : 'rgba(46,204,113,.5)';
 
   // Markers
   const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
@@ -672,61 +672,107 @@ function drawArrows() {
   });
   svg.appendChild(defs);
 
-  // Pre-compute spread positions for each card's exits and entries
-  // exitSlots[cardId] = array of x offsets along bottom edge
-  // entrySlots[cardId] = array of x offsets along top edge
-  const exits = {}, entries = {};
-  arrowDefs.forEach(([f,t]) => {
-    if (!exits[f])   exits[f]   = [];
-    if (!entries[t]) entries[t] = [];
-    exits[f].push(t);
-    entries[t].push(f);
-  });
-
-  // For each arrow, compute exit x on source bottom, entry x on target top
-  // spread evenly within the card width (20%-80% range to stay inside border)
-  function spreadX(el, idx, total, pLeft) {
+  // Helper: get card center and bounds relative to SVG parent
+  function bounds(el) {
     const r = el.getBoundingClientRect();
-    const w = r.width;
-    const margin = w * 0.15;
-    if (total === 1) return r.left - pLeft + w / 2;
-    return r.left - pLeft + margin + (idx / (total-1)) * (w - 2*margin);
+    const ox = pRect.left, oy = pRect.top;
+    return {
+      l: r.left-ox, r: r.right-ox,
+      t: r.top-oy,  b: r.bottom-oy,
+      cx: r.left-ox+r.width/2,
+      cy: r.top-oy+r.height/2,
+      w: r.width, h: r.height
+    };
   }
 
-  // Track which index we're at for each card
-  const exitIdx = {}, entryIdx = {};
-  arrowDefs.forEach(([f]) => { if (exitIdx[f]  === undefined) exitIdx[f]  = 0; });
-  arrowDefs.forEach(([,t])=> { if (entryIdx[t] === undefined) entryIdx[t] = 0; });
+  // Decide exit/entry sides based on relative position
+  // "mainly vertical" = target is clearly below (dy > |dx|*0.7)
+  // otherwise horizontal
+  function getSides(f, t) {
+    const dy = t.cy - f.cy;
+    const dx = t.cx - f.cx;
+    if (Math.abs(dy) > Math.abs(dx) * 0.7) {
+      // Vertical: exit bottom, enter top
+      return { fx:'cx', fy:'b', tx:'cx', ty:'t', mode:'v' };
+    } else if (dx > 0) {
+      // Target is to the right: exit right, enter left
+      return { fx:'r', fy:'cy', tx:'l', ty:'cy', mode:'h' };
+    } else {
+      // Target is to the left: exit left, enter right
+      return { fx:'l', fy:'cy', tx:'r', ty:'cy', mode:'h' };
+    }
+  }
 
-  arrowDefs.forEach(([fId, tId]) => {
+  // Pre-group arrows by (sourceId+side) and (targetId+side) for spread
+  // We need two passes: first determine sides, then compute spreads
+  const arrowInfo = arrowDefs.map(([fId, tId]) => {
     const fEl = document.getElementById('card-'+fId);
     const tEl = document.getElementById('card-'+tId);
-    if (!fEl || !tEl) return;
+    if (!fEl || !tEl) return null;
+    const f = bounds(fEl), t = bounds(tEl);
+    const sides = getSides(f, t);
+    return { fId, tId, fEl, tEl, f, t, sides };
+  }).filter(Boolean);
 
-    const fr = fEl.getBoundingClientRect();
-    const tr = tEl.getBoundingClientRect();
-    const ox = pRect.left, oy = pRect.top;
+  // Count per exit-group and entry-group for spread
+  const exitGroups  = {}; // key: fId+side
+  const entryGroups = {}; // key: tId+side
+  arrowInfo.forEach(a => {
+    const ek = a.fId + a.sides.mode + (a.sides.fx==='r'?'R':a.sides.fx==='l'?'L':'B');
+    const ak = a.tId + a.sides.mode + (a.sides.tx==='l'?'L':a.sides.tx==='r'?'R':'T');
+    if (!exitGroups[ek])  exitGroups[ek]  = [];
+    if (!entryGroups[ak]) entryGroups[ak] = [];
+    exitGroups[ek].push(a);
+    entryGroups[ak].push(a);
+    a.ek = ek; a.ak = ak;
+  });
 
-    const totalExits   = exits[fId]   ? exits[fId].length   : 1;
-    const totalEntries = entries[tId] ? entries[tId].length : 1;
+  // Draw each arrow
+  arrowInfo.forEach(a => {
+    const {fId, tId, f, t, sides} = a;
 
-    const x1 = spreadX(fEl, exitIdx[fId],   totalExits,   ox);
-    const x2 = spreadX(tEl, entryIdx[tId],  totalEntries, ox);
-    exitIdx[fId]++;
-    entryIdx[tId]++;
+    // Compute spread offset within card edge
+    const exitList  = exitGroups[a.ek];
+    const entryList = entryGroups[a.ak];
+    const ei = exitList.indexOf(a);
+    const ai = entryList.indexOf(a);
 
-    const y1 = fr.bottom - oy;
-    const y2 = tr.top    - oy;
+    function spreadVal(list, idx, size, margin) {
+      if (list.length === 1) return 0;
+      return (idx / (list.length - 1) - 0.5) * size * margin;
+    }
 
-    // Bezier: exit straight down, enter straight from above
-    // Control points: drop 40% of vertical distance before curving
-    const gap = Math.max((y2 - y1) * 0.42, 16);
+    let x1, y1, x2, y2, d1x, d1y, d2x, d2y;
+
+    if (sides.mode === 'v') {
+      // Exit bottom, enter top — spread horizontally
+      const sp1 = spreadVal(exitList,  ei, f.w, 0.5);
+      const sp2 = spreadVal(entryList, ai, t.w, 0.5);
+      x1 = f.cx + sp1; y1 = f.b;
+      x2 = t.cx + sp2; y2 = t.t;
+      const gap = Math.max((y2 - y1) * 0.4, 18);
+      d1x = x1; d1y = y1 + gap;
+      d2x = x2; d2y = y2 - gap;
+    } else {
+      // Exit right or left, enter opposite — spread vertically
+      const sp1 = spreadVal(exitList,  ei, f.h, 0.5);
+      const sp2 = spreadVal(entryList, ai, t.h, 0.5);
+      x1 = sides.fx === 'r' ? f.r : f.l;
+      y1 = f.cy + sp1;
+      x2 = sides.tx === 'l' ? t.l : t.r;
+      y2 = t.cy + sp2;
+      const gap = Math.max(Math.abs(x2 - x1) * 0.4, 18);
+      const dir = sides.fx === 'r' ? 1 : -1;
+      d1x = x1 + gap * dir; d1y = y1;
+      d2x = x2 - gap * dir; d2y = y2;
+    }
+
     const approved = states[fId] === 'approved';
     const stroke = approved ? colApproved : colPending;
 
     const path = document.createElementNS('http://www.w3.org/2000/svg','path');
     path.setAttribute('d',
-      `M${x1.toFixed(1)},${y1.toFixed(1)} C${x1.toFixed(1)},${(y1+gap).toFixed(1)} ${x2.toFixed(1)},${(y2-gap).toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`
+      `M${x1.toFixed(1)},${y1.toFixed(1)} C${d1x.toFixed(1)},${d1y.toFixed(1)} ${d2x.toFixed(1)},${d2y.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`
     );
     path.setAttribute('stroke', stroke);
     path.setAttribute('stroke-width', '1.5');
