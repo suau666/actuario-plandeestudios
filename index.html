@@ -445,86 +445,77 @@ const subjects = {
   274: { name:'Sistemas Administrativos',          tramo:2, prereqsApproved:[] },
   462: { name:'Derecho Empresarial',               tramo:2, prereqsApproved:[] },
 
-  // ── Ciclo Profesional ───────────────────────────────────────────────────────
-  // Layout vertical: filas = generaciones (arriba=primero, abajo=último)
-  // Cada fila tiene hasta 5 materias, centradas dentro del grid
+  // ── Ciclo Profesional ──────────────────────────────────────────────────────
+  //   col:  0        1        2        3        4
+  //   r0:  602      601      544      291      603
+  //   r1:  751      279      752      746      548
+  //   r2:  753       —       755       —       758
+  //   r3:   —       754       —        —        —
+  //   r4:   —       756      757       —        —
+  //   r5:   —        —       728      717       —
 
-  // ── Generación 0: solo dependen de Tramo 2 (5 materias, fila completa) ──
   602: { name:'Análisis Estadístico II',           tramo:3, col:0, row:0, prereqsApproved:[540,542] },
   601: { name:'Mat. Financiera y Actuarial',       tramo:3, col:1, row:0, prereqsApproved:[540,542] },
   544: { name:'Matemática Aplicada II',            tramo:3, col:2, row:0, prereqsApproved:[542] },
   291: { name:'Microeconomía p/Economistas',       tramo:3, col:3, row:0, prereqsApproved:[542] },
   603: { name:'Dcho. Financiero, Seg. y S.S.',     tramo:3, col:4, row:0, prereqsApproved:[462] },
 
-  // ── Generación 1: 4 materias, centradas (col 0-3) ──
   751: { name:'Estadística Actuarial',             tramo:3, col:0, row:1, prereqsApproved:[544,602] },
   279: { name:'Administración Financiera',         tramo:3, col:1, row:1, prereqsApproved:[601] },
   752: { name:'Análisis Numérico',                 tramo:3, col:2, row:1, prereqsApproved:[544] },
   746: { name:'Computación Científica Actuarial',  tramo:3, col:3, row:1, prereqsApproved:[540,542] },
+  548: { name:'Dinero y Bancos',                   tramo:3, col:4, row:1, prereqsApproved:[279,602] },
 
-  // ── Generación 2: 1 materia ──
-  548: { name:'Dinero y Bancos',                   tramo:3, col:1, row:2, prereqsApproved:[279,602] },
+  753: { name:'Biometría Actuarial',               tramo:3, col:0, row:2, prereqsApproved:[601,751,752] },
+  755: { name:'T.Act. Seguros Patrimoniales (A2)', tramo:3, col:2, row:2, prereqsApproved:[601,751,752] },
+  758: { name:'Bases Act. Inversiones (A5)',        tramo:3, col:4, row:2, prereqsApproved:[601,751] },
 
-  // ── Generación 3: 3 materias ──
-  753: { name:'Biometría Actuarial',               tramo:3, col:0, row:3, prereqsApproved:[601,751,752] },
-  755: { name:'T.Act. Seguros Patrimoniales (A2)', tramo:3, col:2, row:3, prereqsApproved:[601,751,752] },
-  758: { name:'Bases Act. Inversiones (A5)',        tramo:3, col:4, row:3, prereqsApproved:[601,751] },
+  754: { name:'T.Act. Seguros Personales (A1)',    tramo:3, col:1, row:3, prereqsApproved:[753] },
 
-  // ── Generación 4: 1 materia ──
-  754: { name:'T.Act. Seguros Personales (A1)',    tramo:3, col:1, row:4, prereqsApproved:[753] },
+  756: { name:'T.Act. Fond. y Plan Jub. (A4)',     tramo:3, col:1, row:4, prereqsApproved:[754] },
+  757: { name:'T. Equilibrio Actuarial (A3)',       tramo:3, col:2, row:4, prereqsApproved:[754,755] },
 
-  // ── Generación 5: 2 materias ──
-  756: { name:'T.Act. Fond. y Plan Jub. (A4)',     tramo:3, col:1, row:5, prereqsApproved:[754] },
-  757: { name:'T. Equilibrio Actuarial (A3)',       tramo:3, col:3, row:5, prereqsApproved:[754,755] },
-
-  // ── Generación 6: 2 materias finales ──
-  728: { name:'Práctica Profesional del Actuario', tramo:3, col:1, row:6, prereqsApproved:[754,755,756] },
-  717: { name:'Modelos y Proyecciones Actuariales',tramo:3, col:3, row:6, prereqsApproved:[757,758,746] },
+  728: { name:'Práctica Profesional del Actuario', tramo:3, col:2, row:5, prereqsApproved:[754,755,756] },
+  717: { name:'Modelos y Proyecciones Actuariales',tramo:3, col:3, row:5, prereqsApproved:[757,758,746] },
 
   // Optativas — rendered separately, no col/row
   opt1:{ name:'', tramo:3, prereqsApproved:[], optional:true, editable:true, label:'Optativa 1' },
   opt2:{ name:'', tramo:3, prereqsApproved:[], optional:true, editable:true, label:'Optativa 2' },
 };
 
-// Correlatividades — ordenadas para routing limpio
+// Correlatividades — solo ciclo→ciclo, flujo top-down
 const arrowDefs = [
-  // Col 0: 602 ← 544  (misma fila → horizontal)
-  [544,602],
-  // Col 0→0: 602 → 751  (vertical col 0)
-  [602,751],
-  // Col 1: 601 → 279 → 548  (vertical col 1)
-  [601,279],
-  [279,548],
-  // Col 2: 544 → 752  (vertical col 2)
-  [544,752],
-  // 602 → 548 (col 0 → col 1, mismo nivel aprox — baja diagonal corta)
-  [602,548],
-  // 601,751,752 → 753  (tres fuentes col 0,1,2 → col 1 row 3)
-  [601,753],
-  [751,753],
-  [752,753],
-  // 601,751,752 → 755  (tres fuentes → col 2 row 3)
-  [601,755],
-  [751,755],
-  [752,755],
-  // 601,751 → 758  (col 0,1 → col 4)
-  [601,758],
-  [751,758],
-  // 753 → 754  (vertical col 1)
-  [753,754],
-  // 754 → 756  (vertical col 1)
-  [754,756],
-  // 754,755 → 757  (col 1,2 → col 2 row 5)
-  [754,757],
-  [755,757],
-  // 754,755,756 → 728  (col 1,1,1 → col 3 row 6)
-  [754,728],
-  [755,728],
-  [756,728],
-  // 757,758,746 → 717  (col 2,4,3 → col 4 row 6)
-  [757,717],
-  [758,717],
-  [746,717],
+  // r0→r1: verticales directas
+  [602,751],  // c0→c0
+  [601,279],  // c1→c1
+  [544,752],  // c2→c2
+  // r0→r1 cruzadas
+  [544,602],  // c2→c0 (544 es prereq de 602)
+  [544,751],  // c2→c0
+  [602,548],  // c0→c4
+  [601,548],  // c1→c4 (via 279, pero 279 también prereq)
+  // r1→r2
+  [751,753],  // c0→c0
+  [752,753],  // c2→c0
+  [601,753],  // c1r0→c0r2
+  [751,755],  // c0→c2
+  [752,755],  // c2→c2
+  [601,755],  // c1r0→c2r2
+  [601,758],  // c1r0→c4r2
+  [751,758],  // c0→c4
+  // r2→r3
+  [753,754],  // c0→c1
+  // r3→r4
+  [754,756],  // c1→c1
+  [754,757],  // c1→c2
+  [755,757],  // c2→c2
+  // r4→r5
+  [754,728],  // c1→c2
+  [755,728],  // c2→c2
+  [756,728],  // c1→c2
+  [757,717],  // c2→c3
+  [758,717],  // c4→c3
+  [746,717],  // c3→c3
 ];
 
 const states = {};
@@ -660,9 +651,9 @@ function drawArrows() {
   const parent = svg.parentElement;
   const pRect = parent.getBoundingClientRect();
 
-  const isLight = ['theme-white','theme-aqua','theme-cream'].some(c => document.body.classList.contains(c));
-  const pendingColor  = isLight ? 'rgba(80,80,120,.65)'  : 'rgba(70,70,120,.9)';
-  const approvedColor = isLight ? 'rgba(20,140,70,.6)'   : 'rgba(46,204,113,.6)';
+  const isLight = ['theme-white','theme-aqua','theme-cream'].some(cl => document.body.classList.contains(cl));
+  const pendingColor  = isLight ? 'rgba(80,80,130,.55)'  : 'rgba(80,80,150,.85)';
+  const approvedColor = isLight ? 'rgba(20,140,70,.55)'  : 'rgba(46,204,113,.55)';
 
   const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
   const mkMarker = (mid, color) => {
@@ -672,74 +663,79 @@ function drawArrows() {
     m.setAttribute('refX','5'); m.setAttribute('refY','3');
     m.setAttribute('orient','auto');
     const p = document.createElementNS('http://www.w3.org/2000/svg','path');
-    p.setAttribute('d','M0,0 L0,6 L6,3 z'); p.setAttribute('fill', color);
+    p.setAttribute('d','M0,0 L0,6 L6,3 z');
+    p.setAttribute('fill', color);
     m.appendChild(p); return m;
   };
   defs.appendChild(mkMarker('ad', pendingColor));
   defs.appendChild(mkMarker('ao', approvedColor));
   svg.appendChild(defs);
 
-  // Count how many arrows leave each source card (for offset)
-  const outCount = {};
-  const outIdx   = {};
-  arrowDefs.forEach(([fId]) => { outCount[fId] = (outCount[fId]||0)+1; });
-  arrowDefs.forEach(([fId]) => { outIdx[fId] = 0; });
+  // Count exits per source for horizontal spread
+  const exitCount = {}, exitIdx = {};
+  arrowDefs.forEach(([f]) => exitCount[f] = (exitCount[f]||0)+1);
+  arrowDefs.forEach(([f]) => exitIdx[f]   = 0);
+  const entryCount = {}, entryIdx = {};
+  arrowDefs.forEach(([,t]) => entryCount[t] = (entryCount[t]||0)+1);
+  arrowDefs.forEach(([,t]) => entryIdx[t]   = 0);
 
   arrowDefs.forEach(([fId, tId]) => {
     const fEl = document.getElementById('card-'+fId);
     const tEl = document.getElementById('card-'+tId);
     if (!fEl || !tEl) return;
+
     const fr = fEl.getBoundingClientRect();
     const tr = tEl.getBoundingClientRect();
+    const ox = pRect.left, oy = pRect.top;
 
-    const fL = fr.left - pRect.left, fR = fr.right - pRect.left;
-    const fT = fr.top  - pRect.top,  fB = fr.bottom - pRect.top;
-    const tL = tr.left - pRect.left, tR = tr.right - pRect.left;
-    const tT = tr.top  - pRect.top,  tB = tr.bottom - pRect.top;
-    const fCX = fL + fr.width/2,  fCY = fT + fr.height/2;
-    const tCX = tL + tr.width/2,  tCY = tT + tr.height/2;
+    const fL=fr.left-ox, fR=fr.right-ox, fT=fr.top-oy, fB=fr.bottom-oy, fW=fr.width, fH=fr.height;
+    const tL=tr.left-ox, tR=tr.right-ox, tT=tr.top-oy, tB=tr.bottom-oy, tW=tr.width, tH=tr.height;
 
-    const dy = tCY - fCY;
-    const dx = tCX - fCX;
+    // Spread exits across bottom edge of source
+    const eN = exitCount[fId]  || 1;
+    const eI = exitIdx[fId]    || 0;
+    exitIdx[fId] = eI + 1;
+    const eSpread = eN > 1 ? (eI / (eN-1) - 0.5) * fW * 0.55 : 0;
 
-    // Spread multiple arrows from same source
-    const n = outCount[fId] || 1;
-    const i = outIdx[fId] || 0;
-    outIdx[fId] = i + 1;
-    const spread = n > 1 ? (i/(n-1) - 0.5) * fr.width * 0.6 : 0;
+    // Spread entries across top edge of target
+    const aN = entryCount[tId] || 1;
+    const aI = entryIdx[tId]   || 0;
+    entryIdx[tId] = aI + 1;
+    const aSpread = aN > 1 ? (aI / (aN-1) - 0.5) * tW * 0.55 : 0;
 
-    let x1, y1, x2, y2, cpx1, cpy1, cpx2, cpy2;
+    const dy = (tT + tH/2) - (fT + fH/2);
+    const dx = (tL + tW/2) - (fL + fW/2);
+    const isMainlyDown = Math.abs(dy) >= Math.abs(dx) * 0.6;
 
-    if (Math.abs(dy) > Math.abs(dx) * 0.7) {
-      // Vertical: exit bottom-center (spread), enter top-center
-      x1 = fCX + spread; y1 = fB;
-      // Find entry point — spread on target too
-      const inCount = arrowDefs.filter(([,t]) => t===tId).length;
-      const inIdx   = arrowDefs.filter(([,t]) => t===tId).findIndex(([f,t]) => f===fId);
-      const tSpread = inCount > 1 ? (inIdx/(inCount-1) - 0.5) * tr.width * 0.5 : 0;
-      x2 = tCX + tSpread; y2 = tT;
-      const d = Math.max(Math.abs(y2-y1)*.45, 25);
-      cpx1=x1; cpy1=y1+d; cpx2=x2; cpy2=y2-d;
+    let x1, y1, x2, y2, d;
+
+    if (isMainlyDown) {
+      // Exit bottom, enter top — elbow with rounded corner
+      x1 = fL + fW/2 + eSpread;  y1 = fB;
+      x2 = tL + tW/2 + aSpread;  y2 = tT;
+      const gap = Math.max((y2-y1)*0.4, 20);
+      // Straight down then gentle S-curve
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d', `M${x1},${y1} C${x1},${y1+gap} ${x2},${y2-gap} ${x2},${y2}`);
+      path.setAttribute('stroke', states[fId]==='approved' ? approvedColor : pendingColor);
+      path.setAttribute('stroke-width','1.5');
+      path.setAttribute('fill','none');
+      path.setAttribute('marker-end', states[fId]==='approved' ? 'url(#ao)' : 'url(#ad)');
+      svg.appendChild(path);
     } else {
-      // Horizontal: exit right, enter left
-      x1 = fR; y1 = fCY + spread;
-      x2 = tL; y2 = tCY;
-      const d = Math.max(Math.abs(x2-x1)*.45, 25);
-      cpx1=x1+d; cpy1=y1; cpx2=x2-d; cpy2=y2;
+      // Horizontal: exit right/left, elbow down then across
+      const goRight = dx > 0;
+      x1 = goRight ? fR : fL;  y1 = fT + fH/2 + eSpread;
+      x2 = goRight ? tL : tR;  y2 = tT + tH/2 + aSpread;
+      const gap = Math.max(Math.abs(x2-x1)*0.4, 20);
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d', `M${x1},${y1} C${x1+gap*(goRight?1:-1)},${y1} ${x2-gap*(goRight?1:-1)},${y2} ${x2},${y2}`);
+      path.setAttribute('stroke', states[fId]==='approved' ? approvedColor : pendingColor);
+      path.setAttribute('stroke-width','1.5');
+      path.setAttribute('fill','none');
+      path.setAttribute('marker-end', states[fId]==='approved' ? 'url(#ao)' : 'url(#ad)');
+      svg.appendChild(path);
     }
-
-    const approved = states[fId]==='approved';
-    const stroke = approved
-      ? (isLight ? 'rgba(20,140,70,.25)' : 'rgba(46,204,113,.3)')
-      : (isLight ? 'rgba(80,80,130,.3)'  : 'rgba(60,60,110,.75)');
-
-    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-    path.setAttribute('d',`M${x1},${y1} C${cpx1},${cpy1} ${cpx2},${cpy2} ${x2},${y2}`);
-    path.setAttribute('stroke', stroke);
-    path.setAttribute('stroke-width','1.4');
-    path.setAttribute('fill','none');
-    path.setAttribute('marker-end', approved ? 'url(#ao)' : 'url(#ad)');
-    svg.appendChild(path);
   });
 }
 
