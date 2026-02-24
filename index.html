@@ -102,7 +102,7 @@ header p { font-family:'Space Mono',monospace; font-size:.7rem; letter-spacing:3
 /* ── SUBJECT CARD ────────────────────────────────────────────────────── */
 .subject {
   background:var(--pending-bg); border:1.5px solid var(--pending-border);
-  border-radius:10px; padding:8px 10px 10px 10px;
+  border-radius:10px; padding:10px 12px 12px 12px;
   cursor:default; transition:all .18s ease;
   position:relative; user-select:none;
   display:flex; flex-direction:column; gap:4px;
@@ -164,7 +164,7 @@ header p { font-family:'Space Mono',monospace; font-size:.7rem; letter-spacing:3
 .ciclo-header { padding:14px 20px; border-bottom:1px solid var(--border); font-family:'Space Mono',monospace; font-size:.58rem; letter-spacing:3px; text-transform:uppercase; color:var(--accent); transition:color .3s,border-color .3s; }
 .ciclo-body { padding:20px; position:relative; }
 #arrows-svg { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; }
-.ciclo-grid { position:relative; z-index:1; display:grid; grid-template-columns:repeat(5,1fr); grid-auto-rows:auto; gap:12px 10px; }
+.ciclo-grid { position:relative; z-index:1; display:grid; grid-template-columns:repeat(5,1fr); grid-auto-rows:auto; gap:28px 12px; }
 
 /* Optativas — floating cards below everything */
 .optativas-float {
@@ -340,19 +340,26 @@ async function saveProgress() {
   const statesPayload = {};
   for (const id in states) statesPayload[id] = states[id];
   const optNames = { opt1: subjects.opt1.name, opt2: subjects.opt2.name };
+  const payload = JSON.stringify({
+    user_id: USER_ID,
+    states: statesPayload,
+    opt_names: optNames,
+    theme: currentTheme,
+    updated_at: new Date().toISOString()
+  });
   try {
-    // UPSERT: insert or update in one atomic operation
-    await sbFetch('user_progress', {
+    // Direct fetch so Prefer header is 100% controlled
+    const res = await fetch(SUPABASE_URL + '/rest/v1/user_progress', {
       method: 'POST',
-      prefer: 'resolution=merge-duplicates,return=minimal',
-      body: JSON.stringify({
-        user_id: USER_ID,
-        states: statesPayload,
-        opt_names: optNames,
-        theme: currentTheme,
-        updated_at: new Date().toISOString()
-      })
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates,return=minimal'
+      },
+      body: payload
     });
+    if (!res.ok) { const t = await res.text(); throw new Error(t); }
     showSaved();
   } catch(e) {
     console.error('Save error:', e);
@@ -429,44 +436,40 @@ const subjects = {
   462: { name:'Derecho Empresarial',               tramo:2, prereqsApproved:[] },
 
   // ── Ciclo Profesional ───────────────────────────────────────────────────────
-  // Layout en 5 columnas temáticas para minimizar cruces:
-  //   Col 0: Rama Estadística
-  //   Col 1: Rama Actuarial / Seguros
-  //   Col 2: Rama Matemática / Equilibrio
-  //   Col 3: Rama Economía, Dcho y Comp. Cient.
-  //   Col 4: Rama Final (Inversiones, Práctica, Modelos)
+  // Layout vertical: filas = generaciones (arriba=primero, abajo=último)
+  // Cada fila tiene hasta 5 materias, centradas dentro del grid
 
-  // ── Row 0: materias que solo dependen del Tramo 2 ──
+  // ── Generación 0: solo dependen de Tramo 2 (5 materias, fila completa) ──
   602: { name:'Análisis Estadístico II',           tramo:3, col:0, row:0, prereqsApproved:[540,542] },
   601: { name:'Mat. Financiera y Actuarial',       tramo:3, col:1, row:0, prereqsApproved:[540,542] },
   544: { name:'Matemática Aplicada II',            tramo:3, col:2, row:0, prereqsApproved:[542] },
   291: { name:'Microeconomía p/Economistas',       tramo:3, col:3, row:0, prereqsApproved:[542] },
   603: { name:'Dcho. Financiero, Seg. y S.S.',     tramo:3, col:4, row:0, prereqsApproved:[462] },
 
-  // ── Row 1: primer nivel de dependencias ──
+  // ── Generación 1: 4 materias, centradas (col 0-3) ──
   751: { name:'Estadística Actuarial',             tramo:3, col:0, row:1, prereqsApproved:[544,602] },
   279: { name:'Administración Financiera',         tramo:3, col:1, row:1, prereqsApproved:[601] },
   752: { name:'Análisis Numérico',                 tramo:3, col:2, row:1, prereqsApproved:[544] },
   746: { name:'Computación Científica Actuarial',  tramo:3, col:3, row:1, prereqsApproved:[540,542] },
 
-  // ── Row 2: segundo nivel ──
+  // ── Generación 2: 1 materia ──
   548: { name:'Dinero y Bancos',                   tramo:3, col:1, row:2, prereqsApproved:[279,602] },
 
-  // ── Row 3: tercer nivel — convergen varias ramas ──
-  753: { name:'Biometría Actuarial',               tramo:3, col:1, row:3, prereqsApproved:[601,751,752] },
+  // ── Generación 3: 3 materias ──
+  753: { name:'Biometría Actuarial',               tramo:3, col:0, row:3, prereqsApproved:[601,751,752] },
   755: { name:'T.Act. Seguros Patrimoniales (A2)', tramo:3, col:2, row:3, prereqsApproved:[601,751,752] },
   758: { name:'Bases Act. Inversiones (A5)',        tramo:3, col:4, row:3, prereqsApproved:[601,751] },
 
-  // ── Row 4: cuarto nivel ──
+  // ── Generación 4: 1 materia ──
   754: { name:'T.Act. Seguros Personales (A1)',    tramo:3, col:1, row:4, prereqsApproved:[753] },
 
-  // ── Row 5: quinto nivel ──
+  // ── Generación 5: 2 materias ──
   756: { name:'T.Act. Fond. y Plan Jub. (A4)',     tramo:3, col:1, row:5, prereqsApproved:[754] },
-  757: { name:'T. Equilibrio Actuarial (A3)',       tramo:3, col:2, row:5, prereqsApproved:[754,755] },
+  757: { name:'T. Equilibrio Actuarial (A3)',       tramo:3, col:3, row:5, prereqsApproved:[754,755] },
 
-  // ── Row 6: materias finales ──
-  728: { name:'Práctica Profesional del Actuario', tramo:3, col:3, row:6, prereqsApproved:[754,755,756] },
-  717: { name:'Modelos y Proyecciones Actuariales',tramo:3, col:4, row:6, prereqsApproved:[757,758,746] },
+  // ── Generación 6: 2 materias finales ──
+  728: { name:'Práctica Profesional del Actuario', tramo:3, col:1, row:6, prereqsApproved:[754,755,756] },
+  717: { name:'Modelos y Proyecciones Actuariales',tramo:3, col:3, row:6, prereqsApproved:[757,758,746] },
 
   // Optativas — rendered separately, no col/row
   opt1:{ name:'', tramo:3, prereqsApproved:[], optional:true, editable:true, label:'Optativa 1' },
