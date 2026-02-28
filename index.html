@@ -206,6 +206,9 @@ header p { font-family:'Space Mono',monospace; font-size:.7rem; letter-spacing:3
 
 /* ── TOOLTIP ─────────────────────────────────────────────────────────── */
 .tooltip { position:fixed; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:10px 14px; font-family:'Space Mono',monospace; font-size:.6rem; color:var(--text-main); pointer-events:none; opacity:0; transition:opacity .12s; z-index:9999; max-width:260px; line-height:1.8; }
+
+/* Allow horizontal scroll on mobile to see full desktop layout */
+html, body { min-width: 1200px; overflow-x: auto; }
 .tooltip.visible { opacity:1; }
 </style>
 </head>
