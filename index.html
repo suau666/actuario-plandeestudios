@@ -287,33 +287,8 @@ html, body { min-width: 1200px; overflow-x: auto; }
 
 <script>
 
-// ── SUPABASE CONFIG ──────────────────────────────────────────────────────────
-// Replace these with your actual Supabase project URL and anon key
-const SUPABASE_URL = 'https://zklwrgtsvxhpskvsohyn.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprbHdyZ3RzdnhocHNrdnNvaHluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4Njk5NTAsImV4cCI6MjA4NzQ0NTk1MH0.qihYdsuqwHkNE5WYCFmzAX5r0FkQNFRiIR3lNoyfbaU';
-const USER_ID = 'default'; // Single-user app; change to auth user ID if needed
-// NOTE: For UPSERT to work, run this SQL in Supabase:
-// ALTER TABLE user_progress ADD CONSTRAINT user_progress_user_id_key UNIQUE (user_id);
-
-async function sbFetch(path, opts = {}) {
-  const { prefer, headers: extraHeaders, ...restOpts } = opts;
-  const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
-    headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': prefer || (extraHeaders && extraHeaders['Prefer']) || '',
-      ...extraHeaders
-    },
-    ...restOpts
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(err);
-  }
-  const text = await res.text();
-  return text ? JSON.parse(text) : null;
-}
+// ── LOCAL STORAGE ────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'actuario_progress';
 
 // ── SAVE / LOAD ──────────────────────────────────────────────────────────────
 let saveTimer = null;
@@ -338,41 +313,16 @@ function showError() {
   setTimeout(() => { el.style.opacity = '0'; }, 3000);
 }
 
-async function saveProgress() {
-  showSaving();
+function saveProgress() {
   const statesPayload = {};
   for (const id in states) statesPayload[id] = states[id];
   const optNames = { opt1: subjects.opt1.name, opt2: subjects.opt2.name };
-  const body = JSON.stringify({
-    states: statesPayload,
-    opt_names: optNames,
-    theme: currentTheme,
-    updated_at: new Date().toISOString()
-  });
-  const headers = {
-    'apikey': SUPABASE_KEY,
-    'Authorization': 'Bearer ' + SUPABASE_KEY,
-    'Content-Type': 'application/json'
-  };
   try {
-    // Try PATCH first (update existing row)
-    const patch = await fetch(
-      SUPABASE_URL + '/rest/v1/user_progress?user_id=eq.' + USER_ID,
-      { method: 'PATCH', headers, body }
-    );
-    if (!patch.ok) { const t = await patch.text(); throw new Error(t); }
-    // If no row existed (0 rows updated), insert instead
-    const count = patch.headers.get('content-range');
-    if (count === '*/0') {
-      const post = await fetch(
-        SUPABASE_URL + '/rest/v1/user_progress',
-        { method: 'POST', headers: {...headers, 'Prefer': 'return=minimal'},
-          body: JSON.stringify({ user_id: USER_ID, states: statesPayload,
-            opt_names: optNames, theme: currentTheme,
-            updated_at: new Date().toISOString() }) }
-      );
-      if (!post.ok) { const t = await post.text(); throw new Error(t); }
-    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      states: statesPayload,
+      opt_names: optNames,
+      theme: currentTheme
+    }));
     showSaved();
   } catch(e) {
     console.error('Save error:', e);
@@ -385,27 +335,23 @@ function scheduleSave() {
   saveTimer = setTimeout(saveProgress, 800);
 }
 
-async function loadProgress() {
+function loadProgress() {
   try {
-    const data = await sbFetch('user_progress?user_id=eq.' + USER_ID + '&limit=1');
-    if (data && data.length > 0) {
-      const row = data[0];
-      // Restore states
-      if (row.states) {
-        for (const id in row.states) {
-          if (states[id] !== undefined) states[id] = row.states[id];
-        }
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const row = JSON.parse(raw);
+    if (row.states) {
+      for (const id in row.states) {
+        if (states[id] !== undefined) states[id] = row.states[id];
       }
-      // Restore opt names
-      if (row.opt_names) {
-        if (row.opt_names.opt1 !== undefined) subjects.opt1.name = row.opt_names.opt1;
-        if (row.opt_names.opt2 !== undefined) subjects.opt2.name = row.opt_names.opt2;
-      }
-      // Restore theme
-      if (row.theme) {
-        currentTheme = row.theme;
-        applyTheme(row.theme);
-      }
+    }
+    if (row.opt_names) {
+      if (row.opt_names.opt1 !== undefined) subjects.opt1.name = row.opt_names.opt1;
+      if (row.opt_names.opt2 !== undefined) subjects.opt2.name = row.opt_names.opt2;
+    }
+    if (row.theme) {
+      currentTheme = row.theme;
+      applyTheme(row.theme);
     }
   } catch(e) {
     console.error('Load error:', e);
@@ -526,7 +472,6 @@ const states = {};
 
 function initStates() {
   for (const id in subjects) states[id] = 'pending';
-  [245,241,242,246,255,256, 540,542,262,274,462].forEach(id => { states[id] = 'approved'; });
   // Optativas always start as available (no prereqs)
   states['opt1'] = 'available';
   states['opt2'] = 'available';
@@ -825,9 +770,9 @@ function hideTip(){tip.classList.remove('visible');tv=false;}
 
 window.addEventListener('resize', () => requestAnimationFrame(drawArrows));
 
-async function boot() {
+function boot() {
   initStates();
-  await loadProgress();
+  loadProgress();
   document.getElementById('loading-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   renderAll();
