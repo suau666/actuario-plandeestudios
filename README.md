@@ -1,4 +1,4 @@
-# Actuario · Plan de Estudios
+# Actuario | UBA · Plan de Estudios
 
 Malla curricular interactiva para la carrera de **Actuario — FCE · UBA**, con seguimiento de correlatividades y progreso persistido en Supabase.
 
@@ -7,8 +7,8 @@ Malla curricular interactiva para la carrera de **Actuario — FCE · UBA**, con
 - Muestra todas las materias organizadas por tramo y profundidad de correlatividades
 - Marcás cada materia como **Regular** o **Aprobada** con un click
 - Desbloquea automáticamente las materias que podés cursar según lo aprobado
-- 5 temas de color: Oscuro, Blanco, Verde agua, Cremita, Pizarrón
-- Guarda todo automáticamente en Supabase (estados, nombres de optativas, tema)
+- 5 temas de color: Oscuro, Blanco, Verde agua, Cremita
+- Guarda todo automáticamente de forma local
 
 ## Estados
 
