@@ -6,7 +6,7 @@ Malla curricular interactiva para la carrera de **Actuario — FCE · UBA**, con
 
 - Muestra todas las materias organizadas por tramo y profundidad de correlatividades
 - Marcás cada materia como **Regular** o **Aprobada** con un click
-- Desbloquea automáticamente las materias que podés cursar según lo aprobado
+- Desbloquea automáticamente las materias que podés cursar: las correlativas directas alcanzan con estar **regularizadas**, pero las correlativas de esas correlativas deben estar **aprobadas** (final rendido)
 - 5 temas de color: Oscuro, Blanco, Verde agua, Cremita
 - Guarda todo automáticamente de forma local
 

@@ -381,18 +381,18 @@ function setTheme(name, el) {
 
 const subjects = {
   // Tramo 1
-  245: { name:'Álgebra',                          tramo:1, prereqsApproved:[] },
-  241: { name:'Análisis Matemático 1',             tramo:1, prereqsApproved:[] },
-  242: { name:'Economía',                          tramo:1, prereqsApproved:[] },
-  246: { name:'Historia Ec. y Social',             tramo:1, prereqsApproved:[] },
-  255: { name:'Análisis Contable',                 tramo:1, prereqsApproved:[] },
-  256: { name:'Inst. Gobierno y Ec. Política',     tramo:1, prereqsApproved:[] },
+  245: { name:'Álgebra',                          tramo:1, prereqs:[] },
+  241: { name:'Análisis Matemático 1',             tramo:1, prereqs:[] },
+  242: { name:'Economía',                          tramo:1, prereqs:[] },
+  246: { name:'Historia Ec. y Social',             tramo:1, prereqs:[] },
+  255: { name:'Análisis Contable',                 tramo:1, prereqs:[] },
+  256: { name:'Inst. Gobierno y Ec. Política',     tramo:1, prereqs:[] },
   // Tramo 2
-  540: { name:'Análisis Estadístico',              tramo:2, prereqsApproved:[] },
-  542: { name:'Matemática Aplicada',               tramo:2, prereqsApproved:[] },
-  262: { name:'Macroeconomía I',                   tramo:2, prereqsApproved:[] },
-  274: { name:'Sistemas Administrativos',          tramo:2, prereqsApproved:[] },
-  462: { name:'Derecho Empresarial',               tramo:2, prereqsApproved:[] },
+  540: { name:'Análisis Estadístico',              tramo:2, prereqs:[] },
+  542: { name:'Matemática Aplicada',               tramo:2, prereqs:[] },
+  262: { name:'Macroeconomía I',                   tramo:2, prereqs:[] },
+  274: { name:'Sistemas Administrativos',          tramo:2, prereqs:[] },
+  462: { name:'Derecho Empresarial',               tramo:2, prereqs:[] },
 
   // ── Ciclo Profesional ──────────────────────────────────────────────────────
   //   col:  0        1        2        3        4
@@ -410,32 +410,32 @@ const subjects = {
   // row 3:         754(c1)         757(c3) 756(c4)
   // row 4:                 717(c2) 728(c3)
 
-  544: { name:'Matemática Aplicada II',            tramo:3, col:0, row:0, prereqsApproved:[542] },
-  602: { name:'Análisis Estadístico II',           tramo:3, col:1, row:0, prereqsApproved:[540,542] },
-  601: { name:'Mat. Financiera y Actuarial',       tramo:3, col:2, row:0, prereqsApproved:[540,542] },
-  746: { name:'Computación Científica Actuarial',  tramo:3, col:1, row:4, prereqsApproved:[540,542] },
-  291: { name:'Microeconomía p/Economistas',       tramo:3, col:4, row:0, prereqsApproved:[542] },
+  544: { name:'Matemática Aplicada II',            tramo:3, col:0, row:0, prereqs:[542] },
+  602: { name:'Análisis Estadístico II',           tramo:3, col:1, row:0, prereqs:[540,542] },
+  601: { name:'Mat. Financiera y Actuarial',       tramo:3, col:2, row:0, prereqs:[540,542] },
+  746: { name:'Computación Científica Actuarial',  tramo:3, col:1, row:4, prereqs:[540,542] },
+  291: { name:'Microeconomía p/Economistas',       tramo:3, col:4, row:0, prereqs:[542] },
 
-  752: { name:'Análisis Numérico',                 tramo:3, col:0, row:1, prereqsApproved:[544] },
-  751: { name:'Estadística Actuarial',             tramo:3, col:1, row:1, prereqsApproved:[544,602] },
-  279: { name:'Administración Financiera',         tramo:3, col:3, row:0, prereqsApproved:[601] },
-  603: { name:'Dcho. Financiero, Seg. y S.S.',     tramo:3, col:4, row:1, prereqsApproved:[462] },
-  548: { name:'Dinero y Bancos',                   tramo:3, col:3, row:1, prereqsApproved:[279,602] },
+  752: { name:'Análisis Numérico',                 tramo:3, col:0, row:1, prereqs:[544] },
+  751: { name:'Estadística Actuarial',             tramo:3, col:1, row:1, prereqs:[544,602] },
+  279: { name:'Administración Financiera',         tramo:3, col:3, row:0, prereqs:[601] },
+  603: { name:'Dcho. Financiero, Seg. y S.S.',     tramo:3, col:4, row:1, prereqs:[462] },
+  548: { name:'Dinero y Bancos',                   tramo:3, col:3, row:1, prereqs:[279,602] },
 
-  753: { name:'Biometría Actuarial',               tramo:3, col:1, row:2, prereqsApproved:[601,751,752] },
-  758: { name:'Bases Act. Inversiones (A5)',        tramo:3, col:2, row:2, prereqsApproved:[601,751] },
-  755: { name:'T.Act. Seguros Patrimoniales (A2)', tramo:3, col:3, row:2, prereqsApproved:[601,751,752] },
+  753: { name:'Biometría Actuarial',               tramo:3, col:1, row:2, prereqs:[601,751,752] },
+  758: { name:'Bases Act. Inversiones (A5)',        tramo:3, col:2, row:2, prereqs:[601,751] },
+  755: { name:'T.Act. Seguros Patrimoniales (A2)', tramo:3, col:3, row:2, prereqs:[601,751,752] },
 
-  754: { name:'T.Act. Seguros Personales (A1)',    tramo:3, col:1, row:3, prereqsApproved:[753] },
-  757: { name:'T. Equilibrio Actuarial (A3)',       tramo:3, col:4, row:3, prereqsApproved:[754,755] },
-  756: { name:'T.Act. Fond. y Plan Jub. (A4)',     tramo:3, col:3, row:3, prereqsApproved:[754] },
+  754: { name:'T.Act. Seguros Personales (A1)',    tramo:3, col:1, row:3, prereqs:[753] },
+  757: { name:'T. Equilibrio Actuarial (A3)',       tramo:3, col:4, row:3, prereqs:[754,755] },
+  756: { name:'T.Act. Fond. y Plan Jub. (A4)',     tramo:3, col:3, row:3, prereqs:[754] },
 
-  717: { name:'Modelos y Proyecciones Actuariales',tramo:3, col:2, row:4, prereqsApproved:[757,758,746] },
-  728: { name:'Práctica Profesional del Actuario', tramo:3, col:3, row:4, prereqsApproved:[754,755,756] },
+  717: { name:'Modelos y Proyecciones Actuariales',tramo:3, col:2, row:4, prereqs:[757,758,746] },
+  728: { name:'Práctica Profesional del Actuario', tramo:3, col:3, row:4, prereqs:[754,755,756] },
 
   // Optativas — rendered separately, no col/row
-  opt1:{ name:'', tramo:3, prereqsApproved:[], optional:true, editable:true, label:'Optativa 1' },
-  opt2:{ name:'', tramo:3, prereqsApproved:[], optional:true, editable:true, label:'Optativa 2' },
+  opt1:{ name:'', tramo:3, prereqs:[], optional:true, editable:true, label:'Optativa 1' },
+  opt2:{ name:'', tramo:3, prereqs:[], optional:true, editable:true, label:'Optativa 2' },
 };
 
 // arrowDefs — ORDER controls spread position (first = leftmost exit / leftmost entry)
@@ -478,13 +478,19 @@ function initStates() {
   recalc();
 }
 
-function allApproved(ids) { return ids.every(id => states[id] === 'approved'); }
+// Régimen de correlatividades: para cursar, las correlativas directas deben
+// estar al menos regularizadas, y las correlativas de esas correlativas
+// (el nivel anterior de la cadena) deben estar aprobadas con final.
+function atLeastRegular(id) { return states[id] === 'regular' || states[id] === 'approved'; }
 
 function prereqsMet(id) {
   const s = subjects[id];
   if (s.optional || s.tramo <= 2) return true;
-  if (!s.prereqsApproved.length) return true;
-  return allApproved(s.prereqsApproved);
+  if (!s.prereqs.length) return true;
+  return s.prereqs.every(p =>
+    atLeastRegular(p) &&
+    (subjects[p].prereqs || []).every(gp => states[gp] === 'approved')
+  );
 }
 
 function recalc() {
@@ -547,11 +553,16 @@ function makeCard(id) {
 
   if (!isOpt) {
     div.addEventListener('mouseenter', e => {
-      if (state === 'pending' && subj.prereqsApproved?.length) {
-        const missing = subj.prereqsApproved
-          .filter(p => states[p] !== 'approved')
-          .map(p => `${p} – ${subjects[p]?.name || p}`).join('\n');
-        if (missing) showTip(e, `Falta aprobar:\n${missing}`);
+      if (state === 'pending' && subj.prereqs?.length) {
+        const label = p => `${p} – ${subjects[p]?.name || p}`;
+        const needRegular = subj.prereqs.filter(p => !atLeastRegular(p)).map(label);
+        const needFinal = [...new Set(
+          subj.prereqs.flatMap(p => (subjects[p]?.prereqs || []).filter(gp => states[gp] !== 'approved'))
+        )].map(label);
+        const parts = [];
+        if (needRegular.length) parts.push(`Falta regularizar o aprobar:\n${needRegular.join('\n')}`);
+        if (needFinal.length) parts.push(`Falta aprobar (final):\n${needFinal.join('\n')}`);
+        if (parts.length) showTip(e, parts.join('\n'));
       } else if (state === 'available') {
         showTip(e, 'Click → Regular · Click 2× → Aprobada');
       }
@@ -604,6 +615,7 @@ function drawArrows() {
   const isLight = ['theme-white','theme-aqua','theme-cream'].some(cl => document.body.classList.contains(cl));
   const cPend = isLight ? 'rgba(100,105,140,.65)' : 'rgba(130,130,185,.85)';
   const cAppr = isLight ? 'rgba(18,135,65,.70)'   : 'rgba(46,204,113,.75)';
+  const cReg  = isLight ? 'rgba(200,160,0,.75)'   : 'rgba(230,184,0,.75)';
 
   // ── Markers ───────────────────────────────────────────────────────────────
   // markerUnits="userSpaceOnUse" → fixed pixel size, never clipped by strokeWidth scaling
@@ -626,6 +638,7 @@ function drawArrows() {
   };
   defs.appendChild(mkM('ad', cPend));
   defs.appendChild(mkM('ao', cAppr));
+  defs.appendChild(mkM('ar', cReg));
   svg.appendChild(defs);
 
   function R(el) {
@@ -674,8 +687,9 @@ function drawArrows() {
     if (!fEl || !tEl) return;
 
     const f = R(fEl), t = R(tEl);
-    const approved = states[fId]==='approved';
-    const stroke = approved ? cAppr : cPend;
+    const st = states[fId];
+    const stroke = st === 'approved' ? cAppr : st === 'regular' ? cReg : cPend;
+    const marker = st === 'approved' ? 'url(#ao)' : st === 'regular' ? 'url(#ar)' : 'url(#ad)';
     const key = fId+'-'+tId;
     const MLEN = 9; // marker length in px — path ends this far before card edge
 
@@ -730,7 +744,7 @@ function drawArrows() {
     path.setAttribute('stroke-width','1.5');
     path.setAttribute('fill','none');
     path.setAttribute('stroke-linecap','round');
-    path.setAttribute('marker-end', approved ? 'url(#ao)' : 'url(#ad)');
+    path.setAttribute('marker-end', marker);
     svg.appendChild(path);
   });
 }
