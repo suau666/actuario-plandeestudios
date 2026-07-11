@@ -184,6 +184,84 @@ header p { font-family:'Space Mono',monospace; font-size:.7rem; letter-spacing:3
 }
 
 
+/* ── STATS ROW + PLANNER BUTTON ──────────────────────────────────────── */
+.stats-row { display:flex; justify-content:center; align-items:stretch; gap:14px; margin-bottom:32px; }
+.stats-row .stats { margin:0; }
+.planner-btn {
+  align-self:stretch; background:var(--surface); border:1px solid var(--accent);
+  color:var(--accent); border-radius:14px; padding:0 22px; cursor:pointer;
+  font-family:'Space Mono',monospace; font-size:.62rem; font-weight:700;
+  letter-spacing:2px; text-transform:uppercase; line-height:1.8;
+  transition:all .18s;
+}
+.planner-btn:hover { background:var(--accent); color:var(--bg); transform:translateY(-2px); }
+
+/* ── PLANNER MODAL ───────────────────────────────────────────────────── */
+.planner-overlay {
+  position:fixed; inset:0; z-index:500; background:rgba(0,0,0,.6);
+  display:flex; align-items:center; justify-content:center; padding:24px;
+}
+.planner-modal {
+  background:var(--bg); border:1px solid var(--border); border-radius:16px;
+  width:min(1280px,96vw); max-height:92vh; display:flex; flex-direction:column; overflow:hidden;
+}
+.planner-head {
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:16px 22px; border-bottom:1px solid var(--border); flex-wrap:wrap;
+}
+.planner-head h2 { font-family:'Syne',sans-serif; font-weight:800; font-size:1.1rem; letter-spacing:-.5px; text-transform:uppercase; color:var(--header-color); }
+.planner-head h2 span { color:var(--accent); }
+.planner-actions { display:flex; gap:8px; }
+.planner-actions button {
+  background:var(--surface); border:1px solid var(--border); color:var(--text-main);
+  border-radius:9px; padding:8px 14px; cursor:pointer;
+  font-family:'Space Mono',monospace; font-size:.58rem; letter-spacing:1.5px; text-transform:uppercase;
+  transition:all .15s;
+}
+.planner-actions button:hover { border-color:var(--accent); color:var(--accent); }
+.planner-actions button.primary { border-color:var(--accent); color:var(--accent); }
+.planner-actions button.primary:hover { background:var(--accent); color:var(--bg); }
+.planner-body { overflow-y:auto; padding:18px 22px; display:flex; flex-direction:column; gap:18px; }
+.planner-section-label {
+  font-family:'Space Mono',monospace; font-size:.56rem; letter-spacing:2px;
+  text-transform:uppercase; color:var(--text-sub); margin-bottom:8px;
+}
+.planner-pool {
+  display:flex; flex-wrap:wrap; gap:8px; align-content:flex-start;
+  min-height:56px; border:1.5px dashed var(--border); border-radius:12px; padding:10px;
+  transition:border-color .15s;
+}
+.p-card {
+  background:var(--available-bg); border:1.5px solid var(--available-border); color:var(--available-text);
+  border-radius:8px; padding:6px 10px; font-size:.68rem; font-weight:600; line-height:1.35;
+  cursor:grab; user-select:none; display:flex; align-items:center; gap:7px;
+}
+.p-card:active { cursor:grabbing; }
+.p-card.dragging { opacity:.35; }
+.p-card .p-code { font-family:'Space Mono',monospace; font-size:.52rem; opacity:.55; flex-shrink:0; }
+.planner-periods { display:grid; grid-template-columns:repeat(auto-fill,minmax(215px,1fr)); gap:12px; }
+.p-period {
+  background:var(--surface); border:1.5px solid var(--border); border-radius:12px;
+  padding:10px; display:flex; flex-direction:column; gap:7px; min-height:130px;
+  transition:border-color .15s, background .15s;
+}
+.p-period.intensivo { background:transparent; border-style:dashed; min-height:96px; }
+.p-period.dragover, .planner-pool.dragover { border-color:var(--accent); }
+.p-period-title {
+  display:flex; justify-content:space-between; gap:6px;
+  font-family:'Space Mono',monospace; font-size:.56rem; letter-spacing:1.5px;
+  text-transform:uppercase; color:var(--accent);
+}
+.p-period-title .p-cap { color:var(--text-sub); }
+.planner-toast {
+  position:fixed; bottom:36px; left:50%; transform:translateX(-50%); z-index:600;
+  background:var(--regular-bg); border:1px solid var(--regular-border); color:var(--regular-text);
+  border-radius:10px; padding:10px 18px; max-width:70vw; text-align:center;
+  font-family:'Space Mono',monospace; font-size:.62rem; letter-spacing:1px; line-height:1.7;
+  opacity:0; transition:opacity .3s; pointer-events:none;
+}
+.planner-toast.show { opacity:1; }
+
 /* ── LOADING ──────────────────────────────────────────────────────────── */
 @keyframes ldot { 0%,80%,100%{transform:scale(0.6);opacity:.4} 40%{transform:scale(1);opacity:1} }
 .loader-dot {
@@ -250,7 +328,10 @@ html, body { min-width: 1200px; overflow-x: auto; }
     <p>Correlatividades · FCE · UBA</p>
   </header>
 
-  <div class="stats" id="stats"></div>
+  <div class="stats-row">
+    <div class="stats" id="stats"></div>
+    <button class="planner-btn" onclick="openPlanner()">Planificador<br>Cuatri</button>
+  </div>
 
   <div class="legend">
     <div class="legend-item"><div class="legend-dot pending"></div> Pendiente</div>
@@ -284,6 +365,31 @@ html, body { min-width: 1200px; overflow-x: auto; }
 </div></div>
 
 <div class="tooltip" id="tooltip"></div>
+
+<!-- PLANNER MODAL -->
+<div id="planner-overlay" class="planner-overlay" style="display:none">
+  <div class="planner-modal">
+    <div class="planner-head">
+      <h2>Planificador <span>·</span> Cuatrimestres</h2>
+      <div class="planner-actions">
+        <button class="primary" onclick="autoArrange()">✦ Auto-acomodar</button>
+        <button onclick="clearPlan()">Limpiar</button>
+        <button onclick="closePlanner()">✕ Cerrar</button>
+      </div>
+    </div>
+    <div class="planner-body">
+      <div>
+        <div class="planner-section-label">Materias restantes <span id="pool-count"></span> · arrastrá cada una a un período</div>
+        <div class="planner-pool" id="planner-pool"></div>
+      </div>
+      <div>
+        <div class="planner-section-label">Períodos · cuatrimestres (máx. 4) e intensivos (máx. 2) · doble click en una materia para devolverla</div>
+        <div class="planner-periods" id="planner-periods"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="planner-toast" id="planner-toast"></div>
 
 <script>
 
@@ -321,7 +427,8 @@ function saveProgress() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       states: statesPayload,
       opt_names: optNames,
-      theme: currentTheme
+      theme: currentTheme,
+      plan: plan
     }));
     showSaved();
   } catch(e) {
@@ -353,6 +460,7 @@ function loadProgress() {
       currentTheme = row.theme;
       applyTheme(row.theme);
     }
+    if (row.plan && typeof row.plan === 'object') plan = row.plan;
   } catch(e) {
     console.error('Load error:', e);
   }
@@ -781,6 +889,272 @@ let tv = false;
 function showTip(e,t){tip.innerHTML=t.replace(/\n/g,'<br>');tip.classList.add('visible');tv=true;moveTip(e);}
 function moveTip(e){if(!tv)return;tip.style.left=(e.clientX+16)+'px';tip.style.top=(e.clientY-8)+'px';}
 function hideTip(){tip.classList.remove('visible');tv=false;}
+
+// ── PLANNER ──────────────────────────────────────────────────────────────────
+// Supuestos: una materia planificada en el período N cuenta como regularizada
+// y aprobada a partir del período N+1 (optimista). Las materias hoy en estado
+// regular se asumen con final rendido antes de arrancar el plan.
+let plan = {};            // subjectId -> periodKey ("2026-2C")
+let plannerPeriods = [];  // [{key,label,intensivo,cap}]
+const CAP_CUATRI = 4, CAP_INTENSIVO = 2, AUTO_MAX = 3;
+
+const PERIOD_KINDS = [
+  { kind:'VER', label:y => `Verano ${y}`,     intensivo:true  },
+  { kind:'1C',  label:y => `1º Cuatri ${y}`,  intensivo:false },
+  { kind:'INV', label:y => `Invierno ${y}`,   intensivo:true  },
+  { kind:'2C',  label:y => `2º Cuatri ${y}`,  intensivo:false },
+];
+
+function subjName(id) { return subjects[id].name || subjects[id].label || String(id); }
+function remainingIds() {
+  return Object.keys(subjects).filter(id => states[id] === 'pending' || states[id] === 'available');
+}
+
+// Próximo período según la fecha (ajustable): ene-feb Verano, mar-jun 1C, jul Invierno, ago-dic 2C
+function firstPeriodOf(date) {
+  const m = date.getMonth();
+  return m <= 1 ? 0 : m <= 5 ? 1 : m === 6 ? 2 : 3;
+}
+
+function buildPeriods(nCuatris) {
+  const out = [];
+  const now = new Date();
+  let y = now.getFullYear(), k = firstPeriodOf(now), cuatris = 0;
+  while (cuatris < nCuatris) {
+    const def = PERIOD_KINDS[k];
+    out.push({ key:`${y}-${def.kind}`, label:def.label(y), intensivo:def.intensivo,
+               cap:def.intensivo ? CAP_INTENSIVO : CAP_CUATRI });
+    if (!def.intensivo) cuatris++;
+    k++; if (k === 4) { k = 0; y++; }
+  }
+  return out;
+}
+
+function periodIdx(key) { return plannerPeriods.findIndex(p => p.key === key); }
+function periodCount(key, excludeId) {
+  return Object.keys(plan).filter(id => plan[id] === key && id !== String(excludeId)).length;
+}
+
+// ¿id está "hecha" antes del período idx? (aprobada/regular hoy, o planificada antes)
+function doneBefore(pid, idx) {
+  const st = states[pid];
+  if (st === 'approved' || st === 'regular') return true;
+  const k = plan[pid];
+  return k !== undefined && periodIdx(k) < idx;
+}
+
+function canPlace(id, key) {
+  const idx = periodIdx(key);
+  const per = plannerPeriods[idx];
+  if (periodCount(key, id) >= per.cap) {
+    return { ok:false, msg:`«${per.label}» ya está completo (máx. ${per.cap} materia${per.cap > 1 ? 's' : ''})` };
+  }
+  const missing = [];
+  (subjects[id].prereqs || []).forEach(p => {
+    if (!doneBefore(p, idx)) missing.push(subjName(p));
+    (subjects[p].prereqs || []).forEach(gp => { if (!doneBefore(gp, idx)) missing.push(subjName(gp)); });
+  });
+  const uniq = [...new Set(missing)];
+  if (uniq.length) {
+    return { ok:false, msg:`No podés cursar «${subjName(id)}» en ${per.label} — antes necesitás: ${uniq.join(', ')}` };
+  }
+  return { ok:true };
+}
+
+// Tras cualquier movimiento, las materias cuyas correlativas quedaron mal ubicadas
+// vuelven al listado (en cascada).
+function revalidatePlan() {
+  const bounced = [];
+  let changed = true;
+  while (changed) {
+    changed = false;
+    const entries = Object.entries(plan).sort((a, b) => periodIdx(a[1]) - periodIdx(b[1]));
+    for (const [id, key] of entries) {
+      if (!canPlace(id, key).ok) { delete plan[id]; bounced.push(subjName(id)); changed = true; }
+    }
+  }
+  return bounced;
+}
+
+function tryPlace(id, key) {
+  if (plan[id] === key) return;
+  const chk = canPlace(id, key);
+  if (!chk.ok) { plannerToast(chk.msg); return; }
+  const prev = plan[id];
+  plan[id] = key;
+  const bounced = revalidatePlan();
+  if (plan[id] !== key) { // el propio movimiento quedó inválido en cascada (no debería)
+    if (prev !== undefined) plan[id] = prev;
+  }
+  if (bounced.length) plannerToast(`Volvieron al listado por correlatividades: ${bounced.join(', ')}`);
+  renderPlanner(); scheduleSave();
+}
+
+function unplace(id) {
+  if (plan[id] === undefined) return;
+  delete plan[id];
+  const bounced = revalidatePlan();
+  if (bounced.length) plannerToast(`Volvieron al listado por correlatividades: ${bounced.join(', ')}`);
+  renderPlanner(); scheduleSave();
+}
+
+// ── Auto-acomodo: solo cuatrimestres, máx. 3 por cuatri, respeta lo ya puesto
+function autoArrange() {
+  const memo = {};
+  function transDeps(id) {
+    if (memo[id]) return memo[id];
+    memo[id] = new Set(); // corta ciclos (no debería haber)
+    const set = new Set();
+    for (const o in subjects) {
+      if ((subjects[o].prereqs || []).map(String).includes(String(id))) {
+        set.add(o);
+        transDeps(o).forEach(x => set.add(x));
+      }
+    }
+    memo[id] = set;
+    return set;
+  }
+  let unplaced = remainingIds().filter(id => plan[id] === undefined)
+    .sort((a, b) => transDeps(b).size - transDeps(a).size);
+
+  let pi = 0, guard = 0;
+  while (unplaced.length && guard++ < 100) {
+    while (pi >= plannerPeriods.length) {
+      const cur = plannerPeriods.filter(p => !p.intensivo).length;
+      plannerPeriods = buildPeriods(cur + 1);
+    }
+    const per = plannerPeriods[pi];
+    if (!per.intensivo) {
+      let placed = true;
+      while (placed && periodCount(per.key) < AUTO_MAX) {
+        placed = false;
+        for (const id of unplaced) {
+          if (canPlace(id, per.key).ok) {
+            plan[id] = per.key;
+            unplaced = unplaced.filter(x => x !== id);
+            placed = true;
+            break;
+          }
+        }
+      }
+    }
+    pi++;
+  }
+  if (unplaced.length) plannerToast(`No pude ubicar: ${unplaced.map(subjName).join(', ')}`);
+  renderPlanner(); scheduleSave();
+}
+
+function clearPlan() {
+  if (!Object.keys(plan).length) return;
+  if (!confirm('¿Vaciar todo el plan?')) return;
+  plan = {};
+  renderPlanner(); scheduleSave();
+}
+
+// ── Render del modal
+function makePlannerCard(id) {
+  const d = document.createElement('div');
+  d.className = 'p-card';
+  d.draggable = true;
+  const code = document.createElement('span');
+  code.className = 'p-code';
+  code.textContent = subjects[id].editable ? (subjects[id].label || 'Opt') : id;
+  const name = document.createElement('span');
+  name.textContent = subjects[id].name || (subjects[id].editable ? 'Sin nombre aún' : String(id));
+  d.appendChild(code); d.appendChild(name);
+  d.addEventListener('dragstart', e => {
+    e.dataTransfer.setData('text/plain', String(id));
+    e.dataTransfer.effectAllowed = 'move';
+    d.classList.add('dragging');
+  });
+  d.addEventListener('dragend', () => d.classList.remove('dragging'));
+  if (plan[id] !== undefined) {
+    d.title = 'Doble click para devolver al listado';
+    d.addEventListener('dblclick', () => unplace(id));
+  }
+  return d;
+}
+
+function makeDropzone(el, key) { // key = null → pool (quitar del plan)
+  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('dragover'); });
+  el.addEventListener('dragleave', () => el.classList.remove('dragover'));
+  el.addEventListener('drop', e => {
+    e.preventDefault();
+    el.classList.remove('dragover');
+    const id = e.dataTransfer.getData('text/plain');
+    if (!id || !subjects[id]) return;
+    if (key === null) unplace(id); else tryPlace(id, key);
+  });
+}
+
+function renderPlanner() {
+  const pool = document.getElementById('planner-pool');
+  pool.innerHTML = '';
+  const rem = remainingIds().filter(id => plan[id] === undefined);
+  rem.forEach(id => pool.appendChild(makePlannerCard(id)));
+  document.getElementById('pool-count').textContent = `(${rem.length})`;
+
+  const cont = document.getElementById('planner-periods');
+  cont.innerHTML = '';
+  plannerPeriods.forEach(per => {
+    const box = document.createElement('div');
+    box.className = 'p-period' + (per.intensivo ? ' intensivo' : '');
+    const ids = Object.keys(plan).filter(id => plan[id] === per.key);
+    const title = document.createElement('div');
+    title.className = 'p-period-title';
+    title.innerHTML = `<span>${per.label}</span><span class="p-cap">${ids.length}/${per.cap}</span>`;
+    box.appendChild(title);
+    ids.forEach(id => box.appendChild(makePlannerCard(id)));
+    makeDropzone(box, per.key);
+    cont.appendChild(box);
+  });
+}
+
+function openPlanner() {
+  // Purga materias que ya no están pendientes de cursar
+  for (const id in plan) {
+    if (!subjects[id] || (states[id] !== 'pending' && states[id] !== 'available')) delete plan[id];
+  }
+  const need = Math.max(2, Math.ceil(remainingIds().length / AUTO_MAX));
+  plannerPeriods = buildPeriods(need);
+  // Extiende hasta cubrir asignaciones guardadas en períodos más lejanos
+  let extra = 0;
+  while (extra < 40 && Object.values(plan).some(k => periodIdx(k) < 0)) {
+    extra++;
+    plannerPeriods = buildPeriods(need + extra);
+  }
+  // Descarta asignaciones a períodos que ya pasaron (quedaron fuera de la lista)
+  const stale = [];
+  for (const id in plan) if (periodIdx(plan[id]) < 0) { stale.push(subjName(id)); delete plan[id]; }
+  const bounced = revalidatePlan();
+  renderPlanner();
+  document.getElementById('planner-overlay').style.display = 'flex';
+  const msgs = [];
+  if (stale.length) msgs.push(`Volvieron al listado (período pasado): ${stale.join(', ')}`);
+  if (bounced.length) msgs.push(`Volvieron al listado por correlatividades: ${bounced.join(', ')}`);
+  if (msgs.length) plannerToast(msgs.join(' · '));
+}
+
+function closePlanner() {
+  document.getElementById('planner-overlay').style.display = 'none';
+}
+
+let plannerToastTimer = null;
+function plannerToast(msg) {
+  const t = document.getElementById('planner-toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(plannerToastTimer);
+  plannerToastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+makeDropzone(document.getElementById('planner-pool'), null);
+document.getElementById('planner-overlay').addEventListener('mousedown', e => {
+  if (e.target === e.currentTarget) closePlanner();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('planner-overlay').style.display !== 'none') closePlanner();
+});
 
 window.addEventListener('resize', () => requestAnimationFrame(drawArrows));
 
