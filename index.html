@@ -221,6 +221,38 @@ header p { font-family:'Space Mono',monospace; font-size:.7rem; letter-spacing:3
 .planner-actions button:hover { border-color:var(--accent); color:var(--accent); }
 .planner-actions button.primary { border-color:var(--accent); color:var(--accent); }
 .planner-actions button.primary:hover { background:var(--accent); color:var(--bg); }
+.auto-menu-wrap { position:relative; }
+.auto-menu {
+  position:absolute; top:calc(100% + 8px); right:0; z-index:610;
+  background:var(--surface); border:1px solid var(--border); border-radius:12px;
+  padding:14px; min-width:190px; display:flex; flex-direction:column; gap:10px;
+  box-shadow:0 8px 28px rgba(0,0,0,.35);
+}
+.auto-menu-label {
+  font-family:'Space Mono',monospace; font-size:.54rem; letter-spacing:1.5px;
+  text-transform:uppercase; color:var(--text-sub);
+}
+.auto-opt-row { display:flex; gap:6px; }
+.auto-opt {
+  flex:1; background:var(--bg); border:1.5px solid var(--border); color:var(--text-main);
+  border-radius:8px; padding:7px 0; cursor:pointer;
+  font-family:'Syne',sans-serif; font-weight:800; font-size:.85rem; transition:all .15s;
+}
+.auto-opt:hover { border-color:var(--accent); }
+.auto-opt.active { border-color:var(--accent); color:var(--accent); }
+.auto-check {
+  display:flex; align-items:center; gap:8px; cursor:pointer;
+  font-family:'Space Mono',monospace; font-size:.58rem; letter-spacing:1px;
+  text-transform:uppercase; color:var(--text-main); user-select:none;
+}
+.auto-check input { accent-color:var(--accent); cursor:pointer; }
+.auto-go {
+  background:var(--accent); border:1px solid var(--accent); color:var(--bg);
+  border-radius:9px; padding:9px 0; cursor:pointer;
+  font-family:'Space Mono',monospace; font-size:.6rem; font-weight:700;
+  letter-spacing:2px; text-transform:uppercase; transition:filter .15s;
+}
+.auto-go:hover { filter:brightness(1.15); }
 .planner-body { overflow-y:auto; padding:18px 22px; display:flex; flex-direction:column; gap:18px; }
 .planner-section-label {
   font-family:'Space Mono',monospace; font-size:.56rem; letter-spacing:2px;
@@ -372,7 +404,18 @@ html, body { min-width: 1200px; overflow-x: auto; }
     <div class="planner-head">
       <h2>Planificador <span>·</span> Cuatrimestres</h2>
       <div class="planner-actions">
-        <button class="primary" onclick="autoArrange()">✦ Auto-acomodar</button>
+        <div class="auto-menu-wrap" id="auto-menu-wrap">
+          <button class="primary" onclick="toggleAutoMenu()">✦ Auto-acomodar</button>
+          <div class="auto-menu" id="auto-menu" style="display:none">
+            <div class="auto-menu-label">Materias por cuatri</div>
+            <div class="auto-opt-row">
+              <button class="auto-opt" data-n="2" onclick="setAutoN(2)">2</button>
+              <button class="auto-opt active" data-n="3" onclick="setAutoN(3)">3</button>
+            </div>
+            <label class="auto-check"><input type="checkbox" id="auto-intensivos"> Incluir intensivos</label>
+            <button class="auto-go" onclick="runAutoArrange()">Acomodar</button>
+          </div>
+        </div>
         <button onclick="clearPlan()">Limpiar</button>
         <button onclick="closePlanner()">✕ Cerrar</button>
       </div>
@@ -998,8 +1041,9 @@ function unplace(id) {
   renderPlanner(); scheduleSave();
 }
 
-// ── Auto-acomodo: solo cuatrimestres, máx. 3 por cuatri, respeta lo ya puesto
-function autoArrange() {
+// ── Auto-acomodo: respeta lo ya puesto a mano. maxPer materias por cuatri
+// (2 o 3); si useIntensivos, también llena intensivos hasta su tope de 2.
+function autoArrange(maxPer = 3, useIntensivos = false) {
   const memo = {};
   function transDeps(id) {
     if (memo[id]) return memo[id];
@@ -1024,9 +1068,10 @@ function autoArrange() {
       plannerPeriods = buildPeriods(cur + 1);
     }
     const per = plannerPeriods[pi];
-    if (!per.intensivo) {
+    const cap = per.intensivo ? (useIntensivos ? CAP_INTENSIVO : 0) : maxPer;
+    if (cap > 0) {
       let placed = true;
-      while (placed && periodCount(per.key) < AUTO_MAX) {
+      while (placed && periodCount(per.key) < cap) {
         placed = false;
         for (const id of unplaced) {
           if (canPlace(id, per.key).ok) {
@@ -1042,6 +1087,21 @@ function autoArrange() {
   }
   if (unplaced.length) plannerToast(`No pude ubicar: ${unplaced.map(subjName).join(', ')}`);
   renderPlanner(); scheduleSave();
+}
+
+// ── Menú de opciones del auto-acomodo
+let autoMaxPerCuatri = 3;
+function toggleAutoMenu() {
+  const m = document.getElementById('auto-menu');
+  m.style.display = m.style.display === 'none' ? 'flex' : 'none';
+}
+function setAutoN(n) {
+  autoMaxPerCuatri = n;
+  document.querySelectorAll('.auto-opt').forEach(b => b.classList.toggle('active', +b.dataset.n === n));
+}
+function runAutoArrange() {
+  document.getElementById('auto-menu').style.display = 'none';
+  autoArrange(autoMaxPerCuatri, document.getElementById('auto-intensivos').checked);
 }
 
 function clearPlan() {
@@ -1136,8 +1196,14 @@ function openPlanner() {
 }
 
 function closePlanner() {
+  document.getElementById('auto-menu').style.display = 'none';
   document.getElementById('planner-overlay').style.display = 'none';
 }
+document.addEventListener('mousedown', e => {
+  if (!document.getElementById('auto-menu-wrap').contains(e.target)) {
+    document.getElementById('auto-menu').style.display = 'none';
+  }
+});
 
 let plannerToastTimer = null;
 function plannerToast(msg) {
