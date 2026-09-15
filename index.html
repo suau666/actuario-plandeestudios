@@ -285,6 +285,12 @@ header p { font-family:'Space Mono',monospace; font-size:.7rem; letter-spacing:3
   text-transform:uppercase; color:var(--accent);
 }
 .p-period-title .p-cap { color:var(--text-sub); }
+.p-freezone {
+  display:inline-block; margin-left:6px; padding:1px 6px; border-radius:6px;
+  background:var(--approved-bg); border:1px solid var(--approved-border); color:var(--approved-text);
+  font-size:.48rem; letter-spacing:.5px;
+}
+.p-period.freezone { border-color:var(--approved-border); }
 .planner-toast {
   position:fixed; bottom:36px; left:50%; transform:translateX(-50%); z-index:600;
   background:var(--regular-bg); border:1px solid var(--regular-border); color:var(--regular-text);
@@ -986,12 +992,28 @@ function doneBefore(pid, idx) {
   return k !== undefined && periodIdx(k) < idx;
 }
 
+// Régimen de últimas materias: en tus últimas LAST_N_FREE materias se pierden
+// las correlatividades. Contamos cuántas te faltan cursar al empezar el período
+// idx (ese período en adelante + las sin ubicar); la materia que estás por
+// ubicar cuenta como pendiente en ese período.
+const LAST_N_FREE = 5;
+function pendingAtStart(idx, placingId) {
+  return remainingIds().filter(id => {
+    if (placingId != null && id === String(placingId)) return true;
+    const k = plan[id];
+    return !(k !== undefined && periodIdx(k) < idx);
+  }).length;
+}
+function last5Free(idx, placingId) { return pendingAtStart(idx, placingId) <= LAST_N_FREE; }
+
 function canPlace(id, key) {
   const idx = periodIdx(key);
   const per = plannerPeriods[idx];
   if (periodCount(key, id) >= per.cap) {
     return { ok:false, msg:`«${per.label}» ya está completo (máx. ${per.cap} materia${per.cap > 1 ? 's' : ''})` };
   }
+  // En las últimas materias se pierden las correlatividades (solo rige la capacidad).
+  if (last5Free(idx, id)) return { ok:true };
   const missing = [];
   (subjects[id].prereqs || []).forEach(p => {
     if (!doneBefore(p, idx)) missing.push(subjName(p));
@@ -1156,13 +1178,15 @@ function renderPlanner() {
 
   const cont = document.getElementById('planner-periods');
   cont.innerHTML = '';
-  plannerPeriods.forEach(per => {
+  plannerPeriods.forEach((per, idx) => {
+    const freeZone = last5Free(idx, null);
     const box = document.createElement('div');
-    box.className = 'p-period' + (per.intensivo ? ' intensivo' : '');
+    box.className = 'p-period' + (per.intensivo ? ' intensivo' : '') + (freeZone ? ' freezone' : '');
     const ids = Object.keys(plan).filter(id => plan[id] === per.key);
     const title = document.createElement('div');
     title.className = 'p-period-title';
-    title.innerHTML = `<span>${per.label}</span><span class="p-cap">${ids.length}/${per.cap}</span>`;
+    const badge = freeZone ? '<span class="p-freezone">SIN CORRELATIVAS</span>' : '';
+    title.innerHTML = `<span>${per.label}${badge}</span><span class="p-cap">${ids.length}/${per.cap}</span>`;
     box.appendChild(title);
     ids.forEach(id => box.appendChild(makePlannerCard(id)));
     makeDropzone(box, per.key);
